@@ -1,0 +1,181 @@
+:root {
+  --color-primary: #1E6FFB;
+  --color-background: #F5F6FA;
+  --color-text-primary: #1E1E1E;
+  --color-success: #2ECC71;
+  --color-button-text: #F5F6FA;
+  --font-primary: 'Poppins', 'Inter', sans-serif;
+  --font-alternative: 'Roboto', sans-serif;
+  --border-radius: 12px;
+  --border-radius-large: 16px;
+}
+
+[data-theme="dark"] {
+  --color-primary: #1E6FFB;
+  --color-background: #1E1E1E;
+  --color-text-primary: #F5F6FA;
+  --color-success: #2ECC71;
+  --color-button-text: #F5F6FA;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Utilidades */
+.shadow-soft {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.rounded-custom {
+  border-radius: var(--border-radius);
+}
+
+.rounded-custom-large {
+  border-radius: var(--border-radius-large);
+}
+
+.btn-primary-custom {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-button-text) !important;
+  border-radius: var(--border-radius);
+  padding: 10px 24px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+  background-color: #1556d4;
+  border-color: #1556d4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 111, 251, 0.3);
+}
+
+.btn-success-custom {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: var(--color-button-text) !important;
+  border-radius: var(--border-radius);
+  padding: 10px 24px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-success-custom:hover {
+  background-color: #27ae60;
+  border-color: #27ae60;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+}
+
+.form-control-custom {
+  border-radius: var(--border-radius);
+  border: 1px solid #e0e0e0;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+.form-control-custom:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem rgba(30, 111, 251, 0.15);
+}
+
+.card-custom {
+  border-radius: var(--border-radius-large);
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .card-custom {
+  background-color: #F5F6FA;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .shadow-soft {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: #2a2a2a !important;
+}
+
+[data-theme="dark"] .bg-light {
+  background-color: #1a1a1a !important;
+}
+
+[data-theme="dark"] .form-control-custom {
+  background-color: #2a2a2a;
+  border-color: #404040;
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .form-control-custom:focus {
+  background-color: #2a2a2a;
+  border-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .navbar-light {
+  background-color: #2a2a2a !important;
+}
+
+[data-theme="dark"] .nav-link {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] .alert {
+  background-color: #2a2a2a;
+  border-color: #404040;
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .alert-success {
+  background-color: rgba(46, 204, 113, 0.2);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+[data-theme="dark"] .alert-danger {
+  background-color: rgba(231, 76, 60, 0.2);
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+[data-theme="dark"] .alert-info {
+  background-color: rgba(30, 111, 251, 0.2);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+[data-theme="dark"] footer {
+  background-color: #2a2a2a !important;
+  border-top: 1px solid #404040;
+}
+
