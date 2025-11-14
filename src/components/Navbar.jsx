@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
 
   const handleLogoClick = () => {
@@ -78,20 +78,71 @@ const Navbar = () => {
               </Link>
             </li>
             {isAuthenticated ? (
-              <li className="nav-item">
-                <button
-                  className="nav-link btn btn-link"
-                  onClick={handleLogout}
-                  style={{ 
-                    fontWeight: '500',
-                    border: 'none',
-                    background: 'none',
-                    textDecoration: 'none'
-                  }}
-                >
-                  Cerrar Sesión
-                </button>
-              </li>
+              <>
+                {/* Enlaces según rol del usuario */}
+                {isAuthenticated && (
+                  <>
+                    {(() => {
+                      const role = localStorage.getItem('user') 
+                        ? JSON.parse(localStorage.getItem('user'))?.role 
+                        : null;
+                      
+                      if (role === 'paciente') {
+                        return (
+                          <li className="nav-item">
+                            <Link 
+                              to="/dashboard/paciente" 
+                              className="nav-link"
+                              style={{ fontWeight: '500' }}
+                            >
+                              Mi Dashboard
+                            </Link>
+                          </li>
+                        );
+                      } else if (role === 'medico') {
+                        return (
+                          <li className="nav-item">
+                            <Link 
+                              to="/dashboard/medico" 
+                              className="nav-link"
+                              style={{ fontWeight: '500' }}
+                            >
+                              Mi Dashboard
+                            </Link>
+                          </li>
+                        );
+                      } else if (role === 'admin') {
+                        return (
+                          <li className="nav-item">
+                            <Link 
+                              to="/dashboard/admin" 
+                              className="nav-link"
+                              style={{ fontWeight: '500' }}
+                            >
+                              Panel Admin
+                            </Link>
+                          </li>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </>
+                )}
+                <li className="nav-item">
+                  <button
+                    className="nav-link btn btn-link"
+                    onClick={handleLogout}
+                    style={{ 
+                      fontWeight: '500',
+                      border: 'none',
+                      background: 'none',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Cerrar Sesión
+                  </button>
+                </li>
+              </>
             ) : (
               <li className="nav-item">
                 <Link 

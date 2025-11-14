@@ -11,10 +11,27 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // ============================================================================
+  // TEMPORAL: Desactivar autenticación para testing
+  // INSTRUCCIONES: Cambiar manualmente el "role" para probar distintos dashboards
+  // Valores posibles: "paciente", "medico", "admin"
+  // ============================================================================
+  
+  // Usuario hardcodeado para testing - cambiar role manualmente para probar distintos dashboards
+  const [user, setUser] = useState({
+    id: 1,
+    email: "test@clinica.com",
+    nombre: "Usuario",
+    apellido: "Test", 
+    role: "admin", // CAMBIAR MANUALMENTE: "paciente", "medico", "admin"
+    especialidad: "Cardiología" // solo para medico
+  });
+  
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Siempre autenticado
+  const [loading, setLoading] = useState(false); // Sin loading
 
+  // COMENTAR TEMPORALMENTE TODO EL USEEFFECT:
+  /*
   useEffect(() => {
     // Verificar si hay un usuario guardado en localStorage
     const savedUser = localStorage.getItem('user');
@@ -32,19 +49,33 @@ export const AuthProvider = ({ children }) => {
     }
     setLoading(false);
   }, []);
+  */
 
+  // Mantener estas funciones pero que no hagan nada crítico
   const login = (userData, token) => {
+    console.log("Login simulador:", userData);
     setUser(userData);
     setIsAuthenticated(true);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', token);
+    // No guardar en localStorage temporalmente
+  };
+
+  // Helper para obtener el rol del usuario
+  const getUserRole = () => {
+    return user?.role || null;
+  };
+
+  // Verificar si el usuario tiene un rol específico
+  const hasRole = (role) => {
+    return user?.role === role;
   };
 
   const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    console.log("Logout simulador - manteniendo usuario hardcodeado");
+    // No hacer nada, mantener usuario hardcodeado para testing
+    // setUser(null);
+    // setIsAuthenticated(false);
+    // localStorage.removeItem('user');
+    // localStorage.removeItem('token');
   };
 
   const value = {
@@ -53,6 +84,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
+    getUserRole,
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

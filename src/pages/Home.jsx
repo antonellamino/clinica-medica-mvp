@@ -143,7 +143,7 @@ const Home = () => {
               <div className="row g-0">
                 <div className="col-md-6 d-none d-md-flex align-items-center justify-content-center bg-light">
                   <img 
-                    src={asistenteMedica} 
+                    src="/Assets/asistenteMedica.png" 
                     alt="Asistente Médica" 
                     className="img-fluid"
                     style={{ maxHeight: '300px', padding: '20px' }}
