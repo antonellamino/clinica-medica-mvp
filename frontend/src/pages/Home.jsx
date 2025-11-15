@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 const Home = () => {
-  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { isAuthenticated, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [chatMessage, setChatMessage] = useState('');
@@ -18,13 +19,17 @@ const Home = () => {
     setLoading(true);
 
     try {
-      // Aquí iría la llamada al API cuando esté configurado
-      // const response = await api.post('/auth/login', { email, password });
-      // Por ahora simulamos el login
-      console.log('Login intentado con:', { email, password });
-      setError('Backend no configurado aún. Esta funcionalidad estará disponible pronto.');
+      const response = await api.post('/auth/login', { email, password });
+      login(response.data.user, response.data.token);
+      
+      // Redirigir según el rol
+      if (response.data.user.role === 'admin') {
+        navigate('/admin/medicos');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+      setError(err.response?.data?.error || 'Error al iniciar sesión. Verifica tus credenciales.');
     } finally {
       setLoading(false);
     }
