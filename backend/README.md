@@ -216,14 +216,184 @@ Verifica que el servidor esté funcionando.
 
 ---
 
+### Endpoints Auxiliares
+
+#### GET /api/especialidades
+Lista todas las especialidades disponibles.
+
+**Respuesta exitosa (200):**
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Gastroenterología"
+  },
+  {
+    "id": 2,
+    "nombre": "Oftalmología"
+  }
+]
+```
+
+---
+
+#### GET /api/medicos
+Lista todos los médicos. Opcionalmente puede filtrarse por especialidad.
+
+**Query Parameters:**
+- `especialidad_id` (opcional): Filtrar médicos por especialidad
+
+**Ejemplo:**
+```
+GET /api/medicos
+GET /api/medicos?especialidad_id=1
+```
+
+**Respuesta exitosa (200):**
+```json
+[
+  {
+    "id": 1,
+    "userId": 2,
+    "nombre": "Dr. Juan",
+    "apellido": "Pérez",
+    "email": "medico1@clinica.com",
+    "especialidad": {
+      "id": 1,
+      "nombre": "Gastroenterología"
+    },
+    "horarioInicio": "09:00",
+    "horarioFin": "17:00",
+    "diasSemana": ["lunes", "martes", "miercoles", "jueves", "viernes"]
+  }
+]
+```
+
+---
+
+### Turnos
+
+#### GET /api/turnos/disponibilidad/:medicoId
+Obtiene los horarios disponibles de un médico en una fecha específica. **Público** (no requiere autenticación).
+
+**Query Parameters:**
+- `fecha` (requerido): Fecha en formato YYYY-MM-DD
+
+**Ejemplo:**
+```
+GET /api/turnos/disponibilidad/1?fecha=2024-11-20
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "medico": {
+    "id": 1,
+    "nombre": "Dr. Juan Pérez"
+  },
+  "fecha": "2024-11-20",
+  "horarios": ["09:00", "09:30", "10:00", "10:30", "11:00"]
+}
+```
+
+**Errores:**
+- `400` - "Parámetro fecha es requerido"
+- `400` - "No se pueden agendar turnos en fechas pasadas"
+- `404` - "Médico no encontrado"
+
+---
+
+#### GET /api/turnos
+Lista los turnos según el rol del usuario autenticado. **Requiere autenticación**.
+
+- **Paciente**: Ve solo sus turnos
+- **Médico**: Ve solo sus turnos (donde él es el médico)
+- **Admin**: Ve todos los turnos
+
+**Headers:**
+```
+Authorization: Bearer TOKEN
+```
+
+**Respuesta exitosa (200):**
+```json
+[
+  {
+    "id": 1,
+    "pacienteId": 3,
+    "medicoId": 1,
+    "fecha": "2024-11-20T00:00:00.000Z",
+    "hora": "09:00",
+    "motivo": "Dolor de estómago",
+    "estado": "pendiente",
+    "paciente": {
+      "id": 3,
+      "nombre": "Juan",
+      "apellido": "Pérez",
+      "email": "juan@test.com"
+    },
+    "medico": {
+      "user": {
+        "nombre": "Dr. Juan",
+        "apellido": "García"
+      },
+      "especialidad": {
+        "nombre": "Gastroenterología"
+      }
+    }
+  }
+]
+```
+
+---
+
+#### POST /api/turnos
+Crea un nuevo turno. **Requiere autenticación** (solo pacientes).
+
+**Headers:**
+```
+Authorization: Bearer TOKEN
+```
+
+**Body:**
+```json
+{
+  "medico_id": 1,
+  "fecha": "2024-11-20",
+  "hora": "09:00",
+  "motivo": "Dolor de estómago"
+}
+```
+
+**Respuesta exitosa (201):**
+```json
+{
+  "message": "Turno creado exitosamente",
+  "turno": {
+    "id": 1,
+    "pacienteId": 3,
+    "medicoId": 1,
+    "fecha": "2024-11-20T00:00:00.000Z",
+    "hora": "09:00",
+    "motivo": "Dolor de estómago",
+    "estado": "pendiente"
+  }
+}
+```
+
+**Errores:**
+- `400` - "medico_id, fecha y hora son requeridos"
+- `400` - "No se pueden agendar turnos en fechas pasadas"
+- `400` - "El médico no atiende los [día]s"
+- `400` - "Este horario ya está ocupado"
+- `403` - "Solo los pacientes pueden crear turnos"
+- `404` - "Médico no encontrado"
+
+---
+
 ## 🔗 Endpoints Pendientes
 
 - `POST /api/chatbot` - Chatbot con Gemini
-- `GET /api/turnos` - Listar turnos
-- `POST /api/turnos` - Crear turno
-- `GET /api/turnos/disponibilidad/:medicoId` - Horarios disponibles
-- `GET /api/especialidades` - Listar especialidades
-- `GET /api/medicos` - Listar médicos
 - `POST /api/admin/medicos` - Crear médico (requiere admin)
-- `GET /api/admin/turnos` - Ver todos los turnos (requiere admin)
+- `GET /api/admin/turnos` - Ver todos los turnos (requiere admin) - *Nota: Ya está implementado en GET /api/turnos para admin*
 
