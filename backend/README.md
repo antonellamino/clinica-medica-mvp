@@ -391,9 +391,92 @@ Authorization: Bearer TOKEN
 
 ---
 
+### Admin
+
+#### POST /api/admin/medicos
+Crea un nuevo médico asociado a un usuario existente. **Requiere autenticación** y role `admin`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de admin)
+```
+
+**Body:**
+```json
+{
+  "user_id": 4,
+  "especialidad_id": 1,
+  "horario_inicio": "09:00",
+  "horario_fin": "17:00",
+  "dias_semana": "lunes,martes,miercoles,jueves,viernes"
+}
+```
+
+**Respuesta exitosa (201):**
+```json
+{
+  "message": "Médico creado exitosamente",
+  "medico": {
+    "id": 3,
+    "userId": 4,
+    "especialidadId": 1,
+    "horarioInicio": "09:00",
+    "horarioFin": "17:00",
+    "diasSemana": "lunes,martes,miercoles,jueves,viernes",
+    "user": {
+      "id": 4,
+      "nombre": "Dr. Carlos",
+      "apellido": "López",
+      "email": "carlos@test.com",
+      "role": "medico"
+    },
+    "especialidad": {
+      "id": 1,
+      "nombre": "Gastroenterología"
+    }
+  }
+}
+```
+
+**Errores:**
+- `400` - "user_id, especialidad_id, horario_inicio, horario_fin y dias_semana son requeridos"
+- `400` - "Este usuario ya es médico"
+- `403` - "No autorizado" (si no es admin)
+- `404` - "Usuario no encontrado"
+- `404` - "Especialidad no encontrada"
+
+**Nota:** El role del usuario se actualiza automáticamente a 'medico' si no lo es.
+
+---
+
+#### GET /api/admin/turnos
+Lista todos los turnos del sistema. **Requiere autenticación** y role `admin`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de admin)
+```
+
+**Respuesta exitosa (200):**
+```json
+[
+  {
+    "id": 1,
+    "paciente": { ... },
+    "medico": { ... },
+    "fecha": "...",
+    "hora": "09:00",
+    "motivo": "...",
+    "estado": "pendiente"
+  }
+]
+```
+
+**Nota:** Este endpoint es equivalente a `GET /api/turnos` cuando el usuario es admin.
+
+---
+
 ## 🔗 Endpoints Pendientes
 
 - `POST /api/chatbot` - Chatbot con Gemini
-- `POST /api/admin/medicos` - Crear médico (requiere admin)
-- `GET /api/admin/turnos` - Ver todos los turnos (requiere admin) - *Nota: Ya está implementado en GET /api/turnos para admin*
 
