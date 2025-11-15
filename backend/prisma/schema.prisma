@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      String   // 'paciente' | 'medico' | 'admin'
+  nombre    String
+  apellido  String?
+  createdAt DateTime @default(now())
+  
+  // Relaciones
+  medico        Medico?
+  turnosPaciente Turno[] @relation("PacienteTurnos")
+  
+  @@map("users")
+}
+
+model Especialidad {
+  id      Int      @id @default(autoincrement())
+  nombre  String   @unique
+  medicos Medico[]
+  
+  @@map("especialidades")
+}
+
+model Medico {
+  id            Int    @id @default(autoincrement())
+  userId        Int    @unique
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  especialidadId Int
+  especialidad  Especialidad @relation(fields: [especialidadId], references: [id])
+  horarioInicio String // ej: '09:00'
+  horarioFin    String // ej: '17:00'
+  diasSemana    String // ej: 'lunes,martes,miercoles'
+  turnos        Turno[]
+  
+  @@map("medicos")
+}
+
+model Turno {
+  id         Int      @id @default(autoincrement())
+  pacienteId Int
+  paciente   User     @relation("PacienteTurnos", fields: [pacienteId], references: [id], onDelete: Cascade)
+  medicoId   Int
+  medico     Medico   @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  fecha      DateTime
+  hora       String   // ej: '09:00'
+  motivo     String?
+  estado     String   @default("pendiente") // 'pendiente' | 'confirmado' | 'cancelado'
+  createdAt  DateTime @default(now())
+  
+  @@map("turnos")
+}
+
+
