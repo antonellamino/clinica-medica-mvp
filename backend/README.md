@@ -391,9 +391,157 @@ Authorization: Bearer TOKEN
 
 ---
 
+### Admin
+
+#### POST /api/admin/medicos
+Crea un nuevo médico y su usuario asociado automáticamente. **Requiere autenticación** y role `admin`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de admin)
+```
+
+**Body:**
+```json
+{
+  "nombre": "Dr. Carlos",
+  "apellido": "López",
+  "email": "carlos@test.com",
+  "password": "password123",
+  "especialidad_id": 1,
+  "horario_inicio": "09:00",
+  "horario_fin": "17:00",
+  "dias_semana": "lunes,martes,miercoles,jueves,viernes"
+}
+```
+
+**Respuesta exitosa (201):**
+```json
+{
+  "message": "Médico creado exitosamente",
+  "medico": {
+    "id": 3,
+    "userId": 4,
+    "especialidadId": 1,
+    "horarioInicio": "09:00",
+    "horarioFin": "17:00",
+    "diasSemana": "lunes,martes,miercoles,jueves,viernes",
+    "user": {
+      "id": 4,
+      "nombre": "Dr. Carlos",
+      "apellido": "López",
+      "email": "carlos@test.com",
+      "role": "medico"
+    },
+    "especialidad": {
+      "id": 1,
+      "nombre": "Gastroenterología"
+    }
+  }
+}
+```
+
+**Errores:**
+- `400` - "nombre, email, password, especialidad_id, horario_inicio, horario_fin y dias_semana son requeridos"
+- `400` - "Password debe tener al menos 6 caracteres"
+- `400` - "Email ya registrado"
+- `403` - "No autorizado" (si no es admin)
+- `404` - "Especialidad no encontrada"
+
+**Nota:** Crea automáticamente el usuario con role 'medico' y luego crea el médico asociado.
+
+---
+
+#### PUT /api/admin/medicos/:id
+Actualiza un médico existente. **Requiere autenticación** y role `admin`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de admin)
+```
+
+**Body (todos los campos son opcionales):**
+```json
+{
+  "nombre": "Dr. Carlos",
+  "apellido": "López",
+  "email": "carlos.nuevo@test.com",
+  "password": "nuevopassword123",
+  "especialidad_id": 2,
+  "horario_inicio": "10:00",
+  "horario_fin": "18:00",
+  "dias_semana": "lunes,martes,miercoles"
+}
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Médico actualizado exitosamente",
+  "medico": { ... }
+}
+```
+
+**Errores:**
+- `400` - "Password debe tener al menos 6 caracteres"
+- `400` - "Email ya está en uso por otro usuario"
+- `403` - "No autorizado" (si no es admin)
+- `404` - "Médico no encontrado"
+- `404` - "Especialidad no encontrada"
+
+---
+
+#### DELETE /api/admin/medicos/:id
+Elimina un médico. **Requiere autenticación** y role `admin`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de admin)
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Médico eliminado exitosamente"
+}
+```
+
+**Errores:**
+- `403` - "No autorizado" (si no es admin)
+- `404` - "Médico no encontrado"
+
+**Nota:** Elimina el médico y sus turnos asociados (cascade). El usuario se mantiene pero su role cambia a 'paciente'.
+
+---
+
+#### GET /api/admin/turnos
+Lista todos los turnos del sistema. **Requiere autenticación** y role `admin`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de admin)
+```
+
+**Respuesta exitosa (200):**
+```json
+[
+  {
+    "id": 1,
+    "paciente": { ... },
+    "medico": { ... },
+    "fecha": "...",
+    "hora": "09:00",
+    "motivo": "...",
+    "estado": "pendiente"
+  }
+]
+```
+
+**Nota:** Este endpoint es equivalente a `GET /api/turnos` cuando el usuario es admin.
+
+---
+
 ## 🔗 Endpoints Pendientes
 
 - `POST /api/chatbot` - Chatbot con Gemini
-- `POST /api/admin/medicos` - Crear médico (requiere admin)
-- `GET /api/admin/turnos` - Ver todos los turnos (requiere admin) - *Nota: Ya está implementado en GET /api/turnos para admin*
 

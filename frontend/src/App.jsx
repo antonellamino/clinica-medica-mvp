@@ -9,6 +9,10 @@ import Login from './pages/Login';
 import Registro from './pages/Registro';
 import Error404 from './pages/Error404';
 import Perfil from './pages/Perfil';
+import AdminDashboard from './pages/AdminDashboard';
+import ListadoMedicos from './pages/admin/ListadoMedicos';
+import ListadoPacientes from './pages/admin/ListadoPacientes';
+import ProtectedRoute from './components/ProtectedRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -27,6 +31,17 @@ function App() {
               <Route path="/404" element={<Error404 />} />
               <Route path="*" element={<Error404 />} />
               <Route path="/perfil" element={<Perfil />} />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="medicos" element={<ListadoMedicos />} />
+                <Route path="pacientes" element={<ListadoPacientes />} />
+              </Route>
             </Routes>
             <Footer />
           </div>
