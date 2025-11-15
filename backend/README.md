@@ -129,12 +129,101 @@ npx prisma db seed
   .env                 # Variables de entorno (NO subir a Git)
 ```
 
-## 🔗 Endpoints (cuando estén implementados)
+## 🔗 Endpoints Disponibles
 
-- `POST /api/auth/login` - Login
-- `POST /api/auth/register` - Registro
+### Autenticación
+
+#### POST /api/auth/register
+Registra un nuevo paciente en el sistema.
+
+**Body:**
+```json
+{
+  "email": "test@test.com",
+  "password": "123456",
+  "nombre": "Test",
+  "apellido": "Usuario"
+}
+```
+
+**Respuesta exitosa (201):**
+```json
+{
+  "message": "Usuario registrado exitosamente",
+  "user": {
+    "id": 4,
+    "email": "test@test.com",
+    "role": "paciente",
+    "nombre": "Test",
+    "apellido": "Usuario"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Errores:**
+- `400` - "Email, password y nombre son requeridos"
+- `400` - "Password debe tener al menos 6 caracteres"
+- `400` - "Email ya registrado"
+
+---
+
+#### POST /api/auth/login
+Inicia sesión con email y password.
+
+**Body:**
+```json
+{
+  "email": "admin@clinica.com",
+  "password": "admin123"
+}
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Login exitoso",
+  "user": {
+    "id": 1,
+    "email": "admin@clinica.com",
+    "role": "admin",
+    "nombre": "Admin",
+    "apellido": "Sistema"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Errores:**
+- `400` - "Email y password son requeridos"
+- `401` - "Credenciales inválidas"
+
+**Nota:** El token debe enviarse en el header `Authorization: Bearer TOKEN` para endpoints protegidos.
+
+---
+
+### Health Check
+
+#### GET /health
+Verifica que el servidor esté funcionando.
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "health check ok"
+}
+```
+
+---
+
+## 🔗 Endpoints Pendientes
+
 - `POST /api/chatbot` - Chatbot con Gemini
 - `GET /api/turnos` - Listar turnos
 - `POST /api/turnos` - Crear turno
-- Y más...
+- `GET /api/turnos/disponibilidad/:medicoId` - Horarios disponibles
+- `GET /api/especialidades` - Listar especialidades
+- `GET /api/medicos` - Listar médicos
+- `POST /api/admin/medicos` - Crear médico (requiere admin)
+- `GET /api/admin/turnos` - Ver todos los turnos (requiere admin)
 
