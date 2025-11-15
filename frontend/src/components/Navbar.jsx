@@ -53,19 +53,35 @@ const Navbar = () => {
 
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto align-items-center">
-            <li className="nav-item">
-              <Link 
-                to="/" 
-                className="nav-link"
-                onClick={handleInicioClick}
-                style={{ 
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Inicio
-              </Link>
-            </li>
+            {isAuthenticated && user?.role === 'admin' && (
+              <li className="nav-item">
+                <Link 
+                  to="/admin/medicos" 
+                  className="nav-link"
+                  style={{ 
+                    fontWeight: '500'
+                  }}
+                >
+                  <i className="bi bi-speedometer2 me-1"></i>
+                  Admin
+                </Link>
+              </li>
+            )}
+            {!(isAuthenticated && user?.role === 'admin') && (
+              <li className="nav-item">
+                <Link 
+                  to="/" 
+                  className="nav-link"
+                  onClick={handleInicioClick}
+                  style={{ 
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Inicio
+                </Link>
+              </li>
+            )}
             <li className="nav-item">
               <Link 
                 to="/contacto" 
@@ -77,20 +93,6 @@ const Navbar = () => {
                 Contacto
               </Link>
             </li>
-            {isAuthenticated && user?.role === 'admin' && (
-              <li className="nav-item">
-                <Link 
-                  to="/admin" 
-                  className="nav-link"
-                  style={{ 
-                    fontWeight: '500'
-                  }}
-                >
-                  <i className="bi bi-speedometer2 me-1"></i>
-                  Admin
-                </Link>
-              </li>
-            )}
             {isAuthenticated ? (
               <li className="nav-item">
                 <button
