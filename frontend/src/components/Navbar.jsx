@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
 
   const handleLogoClick = () => {
@@ -77,6 +77,20 @@ const Navbar = () => {
                 Contacto
               </Link>
             </li>
+            {isAuthenticated && user?.role === 'admin' && (
+              <li className="nav-item">
+                <Link 
+                  to="/admin" 
+                  className="nav-link"
+                  style={{ 
+                    fontWeight: '500'
+                  }}
+                >
+                  <i className="bi bi-speedometer2 me-1"></i>
+                  Admin
+                </Link>
+              </li>
+            )}
             {isAuthenticated ? (
               <li className="nav-item">
                 <button

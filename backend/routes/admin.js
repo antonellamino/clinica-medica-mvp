@@ -1,4 +1,5 @@
 import express from 'express';
+import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import { verifyToken, requireRole } from '../middleware/auth.js';
 
@@ -6,33 +7,29 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // POST /api/admin/medicos - Crear médico (solo admin)
+// Crea usuario automáticamente y luego el médico
 router.post('/medicos', verifyToken, requireRole('admin'), async (req, res) => {
   try {
-    const { user_id, especialidad_id, horario_inicio, horario_fin, dias_semana } = req.body;
+    const { nombre, apellido, email, password, especialidad_id, horario_inicio, horario_fin, dias_semana } = req.body;
 
     // Validaciones
-    if (!user_id || !especialidad_id || !horario_inicio || !horario_fin || !dias_semana) {
+    if (!nombre || !email || !password || !especialidad_id || !horario_inicio || !horario_fin || !dias_semana) {
       return res.status(400).json({ 
-        error: 'user_id, especialidad_id, horario_inicio, horario_fin y dias_semana son requeridos' 
+        error: 'nombre, email, password, especialidad_id, horario_inicio, horario_fin y dias_semana son requeridos' 
       });
     }
 
-    // Verificar que el usuario existe
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(user_id) }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password debe tener al menos 6 caracteres' });
     }
 
-    // Verificar que el usuario no sea ya médico
-    const medicoExistente = await prisma.medico.findUnique({
-      where: { userId: parseInt(user_id) }
+    // Verificar si el email ya existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
     });
 
-    if (medicoExistente) {
-      return res.status(400).json({ error: 'Este usuario ya es médico' });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email ya registrado' });
     }
 
     // Verificar que la especialidad existe
@@ -44,18 +41,31 @@ router.post('/medicos', verifyToken, requireRole('admin'), async (req, res) => {
       return res.status(404).json({ error: 'Especialidad no encontrada' });
     }
 
-    // Actualizar role del usuario a 'medico' si no lo es
-    if (user.role !== 'medico') {
-      await prisma.user.update({
-        where: { id: parseInt(user_id) },
-        data: { role: 'medico' }
-      });
-    }
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear médico
+    // Crear usuario primero
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role: 'medico',
+        nombre,
+        apellido: apellido || null,
+      },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        role: true
+      }
+    });
+
+    // Crear médico asociado
     const medico = await prisma.medico.create({
       data: {
-        userId: parseInt(user_id),
+        userId: user.id,
         especialidadId: parseInt(especialidad_id),
         horarioInicio: horario_inicio,
         horarioFin: horario_fin,
@@ -86,6 +96,145 @@ router.post('/medicos', verifyToken, requireRole('admin'), async (req, res) => {
     });
   } catch (error) {
     console.error('Error al crear médico:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// PUT /api/admin/medicos/:id - Actualizar médico (solo admin)
+router.put('/medicos/:id', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, apellido, email, password, especialidad_id, horario_inicio, horario_fin, dias_semana } = req.body;
+
+    // Buscar médico
+    const medico = await prisma.medico.findUnique({
+      where: { id: parseInt(id) },
+      include: { user: true }
+    });
+
+    if (!medico) {
+      return res.status(404).json({ error: 'Médico no encontrado' });
+    }
+
+    // Preparar datos de actualización del usuario
+    const userUpdateData = {};
+    if (nombre) userUpdateData.nombre = nombre;
+    if (apellido !== undefined) userUpdateData.apellido = apellido;
+    if (email) {
+      // Verificar que el email no esté en uso por otro usuario
+      const emailExists = await prisma.user.findFirst({
+        where: {
+          email,
+          id: { not: medico.userId }
+        }
+      });
+      if (emailExists) {
+        return res.status(400).json({ error: 'Email ya está en uso por otro usuario' });
+      }
+      userUpdateData.email = email;
+    }
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ error: 'Password debe tener al menos 6 caracteres' });
+      }
+      userUpdateData.password = await bcrypt.hash(password, 10);
+    }
+
+    // Actualizar usuario si hay cambios
+    if (Object.keys(userUpdateData).length > 0) {
+      await prisma.user.update({
+        where: { id: medico.userId },
+        data: userUpdateData
+      });
+    }
+
+    // Preparar datos de actualización del médico
+    const medicoUpdateData = {};
+    if (especialidad_id) {
+      // Verificar que la especialidad existe
+      const especialidad = await prisma.especialidad.findUnique({
+        where: { id: parseInt(especialidad_id) }
+      });
+      if (!especialidad) {
+        return res.status(404).json({ error: 'Especialidad no encontrada' });
+      }
+      medicoUpdateData.especialidadId = parseInt(especialidad_id);
+    }
+    if (horario_inicio) medicoUpdateData.horarioInicio = horario_inicio;
+    if (horario_fin) medicoUpdateData.horarioFin = horario_fin;
+    if (dias_semana) medicoUpdateData.diasSemana = dias_semana;
+
+    // Actualizar médico si hay cambios
+    if (Object.keys(medicoUpdateData).length > 0) {
+      await prisma.medico.update({
+        where: { id: parseInt(id) },
+        data: medicoUpdateData
+      });
+    }
+
+    // Obtener médico actualizado
+    const medicoActualizado = await prisma.medico.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            role: true
+          }
+        },
+        especialidad: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      message: 'Médico actualizado exitosamente',
+      medico: medicoActualizado
+    });
+  } catch (error) {
+    console.error('Error al actualizar médico:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// DELETE /api/admin/medicos/:id - Eliminar médico (solo admin)
+router.delete('/medicos/:id', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Buscar médico
+    const medico = await prisma.medico.findUnique({
+      where: { id: parseInt(id) },
+      include: { user: true }
+    });
+
+    if (!medico) {
+      return res.status(404).json({ error: 'Médico no encontrado' });
+    }
+
+    // Eliminar médico (cascade elimina turnos)
+    await prisma.medico.delete({
+      where: { id: parseInt(id) }
+    });
+
+    // Actualizar role del usuario a 'paciente' (no eliminamos el usuario)
+    await prisma.user.update({
+      where: { id: medico.userId },
+      data: { role: 'paciente' }
+    });
+
+    res.json({
+      message: 'Médico eliminado exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al eliminar médico:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });

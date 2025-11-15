@@ -394,7 +394,7 @@ Authorization: Bearer TOKEN
 ### Admin
 
 #### POST /api/admin/medicos
-Crea un nuevo médico asociado a un usuario existente. **Requiere autenticación** y role `admin`.
+Crea un nuevo médico y su usuario asociado automáticamente. **Requiere autenticación** y role `admin`.
 
 **Headers:**
 ```
@@ -404,7 +404,10 @@ Authorization: Bearer TOKEN (de admin)
 **Body:**
 ```json
 {
-  "user_id": 4,
+  "nombre": "Dr. Carlos",
+  "apellido": "López",
+  "email": "carlos@test.com",
+  "password": "password123",
   "especialidad_id": 1,
   "horario_inicio": "09:00",
   "horario_fin": "17:00",
@@ -439,13 +442,75 @@ Authorization: Bearer TOKEN (de admin)
 ```
 
 **Errores:**
-- `400` - "user_id, especialidad_id, horario_inicio, horario_fin y dias_semana son requeridos"
-- `400` - "Este usuario ya es médico"
+- `400` - "nombre, email, password, especialidad_id, horario_inicio, horario_fin y dias_semana son requeridos"
+- `400` - "Password debe tener al menos 6 caracteres"
+- `400` - "Email ya registrado"
 - `403` - "No autorizado" (si no es admin)
-- `404` - "Usuario no encontrado"
 - `404` - "Especialidad no encontrada"
 
-**Nota:** El role del usuario se actualiza automáticamente a 'medico' si no lo es.
+**Nota:** Crea automáticamente el usuario con role 'medico' y luego crea el médico asociado.
+
+---
+
+#### PUT /api/admin/medicos/:id
+Actualiza un médico existente. **Requiere autenticación** y role `admin`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de admin)
+```
+
+**Body (todos los campos son opcionales):**
+```json
+{
+  "nombre": "Dr. Carlos",
+  "apellido": "López",
+  "email": "carlos.nuevo@test.com",
+  "password": "nuevopassword123",
+  "especialidad_id": 2,
+  "horario_inicio": "10:00",
+  "horario_fin": "18:00",
+  "dias_semana": "lunes,martes,miercoles"
+}
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Médico actualizado exitosamente",
+  "medico": { ... }
+}
+```
+
+**Errores:**
+- `400` - "Password debe tener al menos 6 caracteres"
+- `400` - "Email ya está en uso por otro usuario"
+- `403` - "No autorizado" (si no es admin)
+- `404` - "Médico no encontrado"
+- `404` - "Especialidad no encontrada"
+
+---
+
+#### DELETE /api/admin/medicos/:id
+Elimina un médico. **Requiere autenticación** y role `admin`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de admin)
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Médico eliminado exitosamente"
+}
+```
+
+**Errores:**
+- `403` - "No autorizado" (si no es admin)
+- `404` - "Médico no encontrado"
+
+**Nota:** Elimina el médico y sus turnos asociados (cascade). El usuario se mantiene pero su role cambia a 'paciente'.
 
 ---
 

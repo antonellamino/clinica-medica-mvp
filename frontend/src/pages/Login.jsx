@@ -29,7 +29,13 @@ const Login = () => {
     try {
       const response = await api.post('/auth/login', formData);
       login(response.data.user, response.data.token);
-      navigate('/');
+      
+      // Redirigir según el rol
+      if (response.data.user.role === 'admin') {
+        navigate('/admin/medicos');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión. Verifica tus credenciales.');
     } finally {
