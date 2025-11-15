@@ -6,7 +6,7 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const location = useLocation();
 
-  // Si estamos en /admin exacto, redirigir a /admin/medicos
+  // Si estamos en /admin exacto, redirigir a /admin/medicos por defecto
   if (location.pathname === '/admin') {
     return <Navigate to="/admin/medicos" replace />;
   }
@@ -32,6 +32,15 @@ const AdminDashboard = () => {
             >
               <i className="bi bi-person-badge me-2"></i>
               Médicos
+            </NavLink>
+            <NavLink
+              to="/admin/pacientes"
+              className={({ isActive }) =>
+                `nav-link ${isActive ? 'active bg-primary text-white rounded' : 'text-dark'}`
+              }
+            >
+              <i className="bi bi-people me-2"></i>
+              Pacientes
             </NavLink>
           </nav>
         </div>

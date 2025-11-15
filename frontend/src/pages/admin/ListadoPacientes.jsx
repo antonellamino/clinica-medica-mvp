@@ -1,83 +1,89 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
-import CrearMedicoModal from '../../components/admin/CrearMedicoModal';
-import VerMedicoModal from '../../components/admin/VerMedicoModal';
-import EditarMedicoModal from '../../components/admin/EditarMedicoModal';
-import ConfirmarEliminarModal from '../../components/admin/ConfirmarEliminarModal';
+import CrearPacienteModal from '../../components/admin/CrearPacienteModal';
+import VerPacienteModal from '../../components/admin/VerPacienteModal';
+import EditarPacienteModal from '../../components/admin/EditarPacienteModal';
+import ConfirmarEliminarPacienteModal from '../../components/admin/ConfirmarEliminarPacienteModal';
 
-const ListadoMedicos = () => {
-  const [medicos, setMedicos] = useState([]);
+const ListadoPacientes = () => {
+  const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCrearModal, setShowCrearModal] = useState(false);
   const [showVerModal, setShowVerModal] = useState(false);
   const [showEditarModal, setShowEditarModal] = useState(false);
   const [showEliminarModal, setShowEliminarModal] = useState(false);
-  const [medicoSeleccionado, setMedicoSeleccionado] = useState(null);
+  const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
 
   useEffect(() => {
-    fetchMedicos();
+    fetchPacientes();
   }, []);
 
-  const fetchMedicos = async () => {
+  const fetchPacientes = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/medicos');
-      setMedicos(response.data);
+      const response = await api.get('/admin/pacientes');
+      setPacientes(response.data);
       setError('');
     } catch (err) {
-      setError('Error al cargar médicos');
+      setError('Error al cargar pacientes');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVer = (medico) => {
-    setMedicoSeleccionado(medico);
+  const handleVer = (paciente) => {
+    setPacienteSeleccionado(paciente);
     setShowVerModal(true);
   };
 
-  const handleEditar = (medico) => {
-    setMedicoSeleccionado(medico);
+  const handleEditar = (paciente) => {
+    setPacienteSeleccionado(paciente);
     setShowEditarModal(true);
   };
 
-  const handleEliminar = (medico) => {
-    setMedicoSeleccionado(medico);
+  const handleEliminar = (paciente) => {
+    setPacienteSeleccionado(paciente);
     setShowEliminarModal(true);
   };
 
   const handleCrearSuccess = () => {
     setShowCrearModal(false);
-    fetchMedicos();
+    fetchPacientes();
   };
 
   const handleEditarSuccess = () => {
     setShowEditarModal(false);
-    setMedicoSeleccionado(null);
-    fetchMedicos();
+    setPacienteSeleccionado(null);
+    fetchPacientes();
   };
 
   const handleEliminarSuccess = () => {
     setShowEliminarModal(false);
-    setMedicoSeleccionado(null);
-    fetchMedicos();
+    setPacienteSeleccionado(null);
+    fetchPacientes();
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-AR');
   };
 
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>
-          <i className="bi bi-person-badge me-2"></i>
-          Gestión de Médicos
+          <i className="bi bi-people me-2"></i>
+          Gestión de Pacientes
         </h2>
         <button
           className="btn btn-primary"
           onClick={() => setShowCrearModal(true)}
         >
           <i className="bi bi-person-plus me-2"></i>
-          Crear Nuevo Médico
+          Crear Nuevo Paciente
         </button>
       </div>
 
@@ -102,39 +108,39 @@ const ListadoMedicos = () => {
                 <th>Nombre</th>
                 <th>Apellido</th>
                 <th>Email</th>
-                <th>Especialidad</th>
-                <th>Horarios</th>
-                <th>Días</th>
+                <th>Turnos</th>
+                <th>Fecha Registro</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {medicos.length === 0 ? (
+              {pacientes.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="text-center py-4 text-muted">
-                    No hay médicos registrados
+                  <td colSpan="7" className="text-center py-4 text-muted">
+                    No hay pacientes registrados
                   </td>
                 </tr>
               ) : (
-                medicos.map((medico) => (
-                  <tr key={medico.id}>
-                    <td className="align-middle">{medico.id}</td>
-                    <td className="align-middle">{medico.nombre}</td>
-                    <td className="align-middle">{medico.apellido || '-'}</td>
-                    <td className="align-middle">{medico.email}</td>
-                    <td className="align-middle">{medico.especialidad.nombre}</td>
+                pacientes.map((paciente) => (
+                  <tr key={paciente.id}>
+                    <td className="align-middle">{paciente.id}</td>
+                    <td className="align-middle">{paciente.nombre}</td>
+                    <td className="align-middle">{paciente.apellido || '-'}</td>
+                    <td className="align-middle">{paciente.email}</td>
                     <td className="align-middle">
-                      {medico.horarioInicio} - {medico.horarioFin}
+                      <span className="badge bg-info">
+                        {paciente._count?.turnosPaciente || 0}
+                      </span>
                     </td>
                     <td className="align-middle">
-                      <small>{Array.isArray(medico.diasSemana) ? medico.diasSemana.join(', ') : medico.diasSemana}</small>
+                      <small>{formatDate(paciente.createdAt)}</small>
                     </td>
                     <td className="align-middle">
                       <div className="btn-group btn-group-sm" role="group">
                         <button
                           type="button"
                           className="btn btn-outline-info"
-                          onClick={() => handleVer(medico)}
+                          onClick={() => handleVer(paciente)}
                           title="Ver detalles"
                         >
                           <i className="bi bi-eye"></i>
@@ -142,7 +148,7 @@ const ListadoMedicos = () => {
                         <button
                           type="button"
                           className="btn btn-outline-primary"
-                          onClick={() => handleEditar(medico)}
+                          onClick={() => handleEditar(paciente)}
                           title="Editar"
                         >
                           <i className="bi bi-pencil"></i>
@@ -150,7 +156,7 @@ const ListadoMedicos = () => {
                         <button
                           type="button"
                           className="btn btn-outline-danger"
-                          onClick={() => handleEliminar(medico)}
+                          onClick={() => handleEliminar(paciente)}
                           title="Eliminar"
                         >
                           <i className="bi bi-trash"></i>
@@ -166,40 +172,40 @@ const ListadoMedicos = () => {
       )}
 
       {/* Modales */}
-      <CrearMedicoModal
+      <CrearPacienteModal
         show={showCrearModal}
         onHide={() => setShowCrearModal(false)}
         onSuccess={handleCrearSuccess}
       />
 
-      {medicoSeleccionado && (
+      {pacienteSeleccionado && (
         <>
-          <VerMedicoModal
+          <VerPacienteModal
             show={showVerModal}
             onHide={() => {
               setShowVerModal(false);
-              setMedicoSeleccionado(null);
+              setPacienteSeleccionado(null);
             }}
-            medico={medicoSeleccionado}
+            paciente={pacienteSeleccionado}
           />
 
-          <EditarMedicoModal
+          <EditarPacienteModal
             show={showEditarModal}
             onHide={() => {
               setShowEditarModal(false);
-              setMedicoSeleccionado(null);
+              setPacienteSeleccionado(null);
             }}
-            medico={medicoSeleccionado}
+            paciente={pacienteSeleccionado}
             onSuccess={handleEditarSuccess}
           />
 
-          <ConfirmarEliminarModal
+          <ConfirmarEliminarPacienteModal
             show={showEliminarModal}
             onHide={() => {
               setShowEliminarModal(false);
-              setMedicoSeleccionado(null);
+              setPacienteSeleccionado(null);
             }}
-            medico={medicoSeleccionado}
+            paciente={pacienteSeleccionado}
             onSuccess={handleEliminarSuccess}
           />
         </>
@@ -208,5 +214,5 @@ const ListadoMedicos = () => {
   );
 };
 
-export default ListadoMedicos;
+export default ListadoPacientes;
 

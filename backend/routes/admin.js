@@ -239,6 +239,201 @@ router.delete('/medicos/:id', verifyToken, requireRole('admin'), async (req, res
   }
 });
 
+// GET /api/admin/pacientes - Listar todos los pacientes (solo admin)
+router.get('/pacientes', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const pacientes = await prisma.user.findMany({
+      where: {
+        role: 'paciente'
+      },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        apellido: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: {
+            turnosPaciente: true
+          }
+        }
+      },
+      orderBy: {
+        nombre: 'asc'
+      }
+    });
+
+    res.json(pacientes);
+  } catch (error) {
+    console.error('Error al obtener pacientes:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// POST /api/admin/pacientes - Crear paciente (solo admin)
+router.post('/pacientes', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const { nombre, apellido, email, password } = req.body;
+
+    // Validaciones
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ 
+        error: 'nombre, email y password son requeridos' 
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password debe tener al menos 6 caracteres' });
+    }
+
+    // Verificar si el email ya existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email ya registrado' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Crear paciente
+    const paciente = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role: 'paciente',
+        nombre,
+        apellido: apellido || null,
+      },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        apellido: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    res.status(201).json({
+      message: 'Paciente creado exitosamente',
+      paciente
+    });
+  } catch (error) {
+    console.error('Error al crear paciente:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// PUT /api/admin/pacientes/:id - Actualizar paciente (solo admin)
+router.put('/pacientes/:id', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, apellido, email, password } = req.body;
+
+    // Buscar paciente
+    const paciente = await prisma.user.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!paciente) {
+      return res.status(404).json({ error: 'Paciente no encontrado' });
+    }
+
+    if (paciente.role !== 'paciente') {
+      return res.status(400).json({ error: 'Este usuario no es un paciente' });
+    }
+
+    // Preparar datos de actualización
+    const updateData = {};
+    if (nombre) updateData.nombre = nombre;
+    if (apellido !== undefined) updateData.apellido = apellido;
+    if (email) {
+      // Verificar que el email no esté en uso por otro usuario
+      const emailExists = await prisma.user.findFirst({
+        where: {
+          email,
+          id: { not: parseInt(id) }
+        }
+      });
+      if (emailExists) {
+        return res.status(400).json({ error: 'Email ya está en uso por otro usuario' });
+      }
+      updateData.email = email;
+    }
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ error: 'Password debe tener al menos 6 caracteres' });
+      }
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    // Actualizar paciente
+    const pacienteActualizado = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        apellido: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    res.json({
+      message: 'Paciente actualizado exitosamente',
+      paciente: pacienteActualizado
+    });
+  } catch (error) {
+    console.error('Error al actualizar paciente:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// DELETE /api/admin/pacientes/:id - Eliminar paciente (solo admin)
+router.delete('/pacientes/:id', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Buscar paciente
+    const paciente = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        _count: {
+          select: {
+            turnosPaciente: true
+          }
+        }
+      }
+    });
+
+    if (!paciente) {
+      return res.status(404).json({ error: 'Paciente no encontrado' });
+    }
+
+    if (paciente.role !== 'paciente') {
+      return res.status(400).json({ error: 'Este usuario no es un paciente' });
+    }
+
+    // Eliminar paciente (cascade elimina turnos)
+    await prisma.user.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.json({
+      message: 'Paciente eliminado exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al eliminar paciente:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // GET /api/admin/turnos - Ver todos los turnos (solo admin)
 // Nota: Ya está implementado en GET /api/turnos para admin, pero lo dejamos por si acaso
 router.get('/turnos', verifyToken, requireRole('admin'), async (req, res) => {

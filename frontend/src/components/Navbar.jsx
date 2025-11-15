@@ -24,7 +24,7 @@ const Navbar = () => {
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-soft">
-      <div className="container">
+      <div className="container-fluid">
         <Link 
           to="/" 
           className="navbar-brand d-flex align-items-center"
@@ -82,17 +82,19 @@ const Navbar = () => {
                 </Link>
               </li>
             )}
-            <li className="nav-item">
-              <Link 
-                to="/contacto" 
-                className="nav-link"
-                style={{ 
-                  fontWeight: '500'
-                }}
-              >
-                Contacto
-              </Link>
-            </li>
+            {!(isAuthenticated && user?.role === 'admin') && (
+              <li className="nav-item">
+                <Link 
+                  to="/contacto" 
+                  className="nav-link"
+                  style={{ 
+                    fontWeight: '500'
+                  }}
+                >
+                  Contacto
+                </Link>
+              </li>
+            )}
             {isAuthenticated ? (
               <li className="nav-item">
                 <button
