@@ -27,17 +27,11 @@ const Login = () => {
     setError('');
 
     try {
-      // Aquí iría la llamada al API cuando esté configurado
-      // const response = await api.post('/auth/login', formData);
-      // login(response.data.user, response.data.token);
-      // Por ahora simulamos el login
-      console.log('Login intentado con:', formData);
-      setError('Backend no configurado aún. Esta funcionalidad estará disponible pronto.');
-      // Simulación de login exitoso (descomentar cuando el backend esté listo):
-      // login({ email: formData.email, name: 'Usuario' }, 'fake-token');
-      // navigate('/');
+      const response = await api.post('/auth/login', formData);
+      login(response.data.user, response.data.token);
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+      setError(err.response?.data?.error || 'Error al iniciar sesión. Verifica tus credenciales.');
     } finally {
       setLoading(false);
     }
