@@ -1,97 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
-// ============================================================================
-// PRINCIPIOS ÉTICOS - REGLAS DE DERIVACIÓN MÉDICA
-// ============================================================================
-const ethicalDerivationRules = {
-  URGENCIAS: {
-    síntomas: [
-      'dolor pecho', 'opresión pecho', 'dificultad respirar', 'sangrado intenso', 
-      'dolor brazo izquierdo', 'dolor de pecho', 'presión en el pecho',
-      'falta de aire', 'sensación de ahogo', 'sangrado abundante',
-      'pérdida de conocimiento', 'convulsiones', 'accidente grave'
-    ],
-    mensaje: '⚠️ **URGENCIA MÉDICA**: Por favor, acuda inmediatamente a emergencias o llame al 107. Estos síntomas podrían indicar una condición grave que requiere atención inmediata. No puedo ayudarte con urgencias médicas. Busca atención profesional inmediata.',
-    prioridad: 'ALTA'
-  },
-  Cardiología: {
-    síntomas: [
-      'palpitaciones', 'taquicardia', 'presión arterial', 'mareos cardiacos',
-      'dolor en el pecho leve', 'ritmo cardíaco irregular', 'corazón acelerado',
-      'hipertensión', 'baja presión', 'mareo al levantarse'
-    ],
-    mensaje: 'Basado en tus síntomas cardiovasculares, te recomiendo consultar con **Cardiología**.',
-    prioridad: 'MEDIA'
-  },
-  Gastroenterología: {
-    síntomas: [
-      'dolor estómago', 'náuseas', 'vómitos', 'diarrea', 'acidez', 'dolor abdominal',
-      'malestar estomacal', 'indigestión', 'reflujo', 'gases', 'estreñimiento',
-      'cólicos', 'dolor de barriga'
-    ],
-    mensaje: 'Para estos síntomas digestivos, te derivaría a **Gastroenterología**.',
-    prioridad: 'MEDIA'
-  },
-  Oftalmología: {
-    síntomas: [
-      'problemas vista', 'visión borrosa', 'dolor ojos', 'ojos rojos', 'ceguera temporal',
-      'ojos secos', 'lagrimeo', 'conjuntivitis', 'difultad para ver', 'cambio en la visión',
-      'puntos flotantes', 'fotofobia'
-    ],
-    mensaje: 'Para síntomas relacionados con la visión, te recomiendo **Oftalmología**.',
-    prioridad: 'MEDIA'
-  },
-  Pediatría: {
-    síntomas: [
-      'fiebre niño', 'niño', 'bebé', 'vacunas', 'control niño', 'infantil',
-      'niña', 'niñas', 'niños', 'recién nacido', 'lactante', 'adolescente menor'
-    ],
-    mensaje: 'Para atención infantil, la especialidad adecuada es **Pediatría**.',
-    prioridad: 'MEDIA'
-  },
-  Dermatología: {
-    síntomas: [
-      'sarpullido', 'erupción', 'piel irritada', 'manchas en la piel', 'picazón',
-      'eczema', 'dermatitis', 'acné', 'alergia en la piel', 'ronchas'
-    ],
-    mensaje: 'Para síntomas relacionados con la piel, te recomiendo **Dermatología**.',
-    prioridad: 'MEDIA'
-  },
-  Neurología: {
-    síntomas: [
-      'dolor cabeza', 'migraña', 'mareos', 'vértigo', 'mareo constante',
-      'cefalea', 'temblores', 'adormecimiento', 'hormigueo', 'pérdida de sensibilidad'
-    ],
-    mensaje: 'Para síntomas neurológicos, te recomiendo consultar con **Neurología**.',
-    prioridad: 'MEDIA'
-  }
-};
-
-// ============================================================================
-// DATOS MOCK DE MÉDICOS - Preparados para backend
-// ============================================================================
-const mockDoctors = {
-  'Cardiología': [
-    { id: 1, nombre: 'Juan', apellido: 'Pérez', especialidad: 'Cardiología', horario: 'Lunes a Viernes 9:00-17:00', telefono: '+54 11 1234-5678' }
-  ],
-  'Gastroenterología': [
-    { id: 2, nombre: 'Ana', apellido: 'López', especialidad: 'Gastroenterología', horario: 'Lunes a Jueves 8:00-16:00', telefono: '+54 11 2345-6789' }
-  ],
-  'Oftalmología': [
-    { id: 3, nombre: 'Carlos', apellido: 'Gómez', especialidad: 'Oftalmología', horario: 'Martes a Viernes 10:00-18:00', telefono: '+54 11 3456-7890' }
-  ],
-  'Pediatría': [
-    { id: 4, nombre: 'María', apellido: 'Rodríguez', especialidad: 'Pediatría', horario: 'Lunes a Viernes 8:00-15:00', telefono: '+54 11 4567-8901' }
-  ],
-  'Dermatología': [
-    { id: 5, nombre: 'Roberto', apellido: 'Martínez', especialidad: 'Dermatología', horario: 'Miércoles a Viernes 9:00-17:00', telefono: '+54 11 5678-9012' }
-  ],
-  'Neurología': [
-    { id: 6, nombre: 'Laura', apellido: 'Fernández', especialidad: 'Neurología', horario: 'Lunes a Jueves 10:00-18:00', telefono: '+54 11 6789-0123' }
-  ]
-};
+// Las reglas hardcodeadas ya no se usan, ahora usamos Gemini API desde el backend
 
 // ============================================================================
 // MENSAJE INICIAL ÉTICO OBLIGATORIO
@@ -117,7 +29,7 @@ const initialEthicalMessage = `🤖 **Asistente Virtual de Derivación Médica**
 ¿Podrías contarme brevemente qué síntomas tienes?`;
 
 const Chatbot = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -128,11 +40,20 @@ const Chatbot = () => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [conversationState, setConversationState] = useState('waiting_symptoms'); // waiting_symptoms, showing_specialty, selecting_doctor
+  const [conversationState, setConversationState] = useState('waiting_symptoms'); // waiting_symptoms, showing_specialty, selecting_doctor, selecting_date, selecting_time, confirming
   const [detectedSpecialty, setDetectedSpecialty] = useState(null);
   const [availableDoctors, setAvailableDoctors] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [symptoms, setSymptoms] = useState('');
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
+
+  // Verificar si el usuario es paciente
+  const isPatient = isAuthenticated && user?.role === 'paciente';
 
   // Scroll automático a nuevos mensajes
   useEffect(() => {
@@ -143,40 +64,20 @@ const Chatbot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Función para detectar especialidad basada en síntomas (ÉTICA)
-  const detectSpecialty = (text) => {
-    const lowerText = text.toLowerCase();
-    
-    // Primero verificar urgencias
-    const urgenciaSymptoms = ethicalDerivationRules.URGENCIAS.síntomas;
-    if (urgenciaSymptoms.some(symptom => lowerText.includes(symptom))) {
-      return 'URGENCIAS';
+  // Función para enviar mensaje al backend y obtener respuesta de Gemini
+  const sendMessageToBackend = async (message) => {
+    try {
+      const response = await api.post('/chatbot', { message });
+      return response.data;
+    } catch (error) {
+      console.error('Error al comunicarse con el chatbot:', error);
+      throw error;
     }
-
-    // Luego verificar otras especialidades
-    for (const [specialty, rule] of Object.entries(ethicalDerivationRules)) {
-      if (specialty === 'URGENCIAS') continue;
-      if (rule.síntomas.some(symptom => lowerText.includes(symptom))) {
-        return specialty;
-      }
-    }
-
-    return null;
-  };
-
-  // Función para obtener médicos disponibles (Mock - preparado para backend)
-  const getAvailableDoctors = async (specialty) => {
-    // Simulación: cuando el backend esté listo, usar:
-    // const response = await api.get(`/doctors?specialty=${specialty}`);
-    // return response.data;
-    
-    // Por ahora retornamos datos mock
-    return mockDoctors[specialty] || [];
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputMessage.trim() || loading) return;
+    if (!inputMessage.trim() || loading || !isPatient) return;
 
     const userMessage = {
       id: messages.length + 1,
@@ -186,78 +87,260 @@ const Chatbot = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageText = inputMessage.trim();
+    
+    // Guardar síntomas si estamos en el estado inicial
+    if (conversationState === 'waiting_symptoms') {
+      setSymptoms(messageText);
+    }
+    
     setInputMessage('');
     setLoading(true);
 
-    // Simular delay de procesamiento
-    setTimeout(async () => {
-      let botResponse = '';
+    try {
+      // Enviar mensaje al backend con Gemini
+      const response = await sendMessageToBackend(messageText);
 
-      if (conversationState === 'waiting_symptoms') {
-        const specialty = detectSpecialty(inputMessage);
-
-        if (specialty === 'URGENCIAS') {
-          botResponse = ethicalDerivationRules.URGENCIAS.mensaje;
-          setMessages(prev => [...prev, {
-            id: prev.length + 1,
-            text: botResponse,
-            sender: 'bot',
-            timestamp: new Date()
-          }]);
-          setLoading(false);
-          return;
-        }
-
-        if (specialty) {
-          setDetectedSpecialty(specialty);
-          const doctors = await getAvailableDoctors(specialty);
-          setAvailableDoctors(doctors);
-
-          botResponse = `${ethicalDerivationRules[specialty].mensaje}\n\n`;
-          
-          if (doctors.length > 0) {
-            botResponse += `**Médicos disponibles en ${specialty}:**\n\n`;
-            doctors.forEach((doctor, index) => {
-              botResponse += `${index + 1}. **Dr. ${doctor.nombre} ${doctor.apellido}**\n`;
-              botResponse += `   📅 ${doctor.horario}\n`;
-              botResponse += `   📞 ${doctor.telefono}\n\n`;
-            });
-            botResponse += `¿Te gustaría agendar un turno con alguno de estos profesionales?`;
-          } else {
-            botResponse += `Por el momento no hay médicos disponibles en esta especialidad. Te recomiendo contactarnos para coordinar una cita.`;
-          }
-
-          setConversationState('showing_specialty');
-        } else {
-          botResponse = `Entiendo. Para poder ayudarte mejor, ¿podrías describir con más detalle tus síntomas? Por ejemplo: dolor, localización, intensidad, duración, etc.\n\nRecuerda: Si tienes síntomas graves, acude inmediatamente a urgencias.`;
-        }
-      } else if (conversationState === 'showing_specialty') {
-        const lowerText = inputMessage.toLowerCase();
-        if (lowerText.includes('sí') || lowerText.includes('si') || lowerText.includes('agendar') || lowerText.includes('turno')) {
-          if (!isAuthenticated) {
-            botResponse = `Para agendar un turno, necesitas tener una cuenta. Por favor, regístrate o inicia sesión para continuar.`;
-            setConversationState('waiting_symptoms');
-          } else {
-            botResponse = `¡Perfecto! Para agendar tu turno, por favor visita tu Dashboard o contacta directamente con el profesional seleccionado.\n\n¿Hay algo más en lo que pueda ayudarte?`;
-            setConversationState('waiting_symptoms');
-          }
-        } else {
-          botResponse = `Entiendo. Si necesitas algo más, por favor describe tus síntomas nuevamente.`;
-          setConversationState('waiting_symptoms');
-          setDetectedSpecialty(null);
-          setAvailableDoctors([]);
-        }
+      // Procesar respuesta del backend
+      if (response.isUrgency) {
+        // Caso de urgencia médica
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          text: response.response,
+          sender: 'bot',
+          timestamp: new Date()
+        }]);
+        setConversationState('waiting_symptoms');
+      } else if (response.specialty && response.doctors.length > 0) {
+        // Se detectó especialidad y hay médicos disponibles
+        setDetectedSpecialty(response.specialty);
+        setAvailableDoctors(response.doctors);
+        setConversationState('showing_specialty');
+        
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          text: response.response,
+          sender: 'bot',
+          timestamp: new Date()
+        }]);
+      } else if (response.specialty && response.doctors.length === 0) {
+        // Se detectó especialidad pero no hay médicos
+        setDetectedSpecialty(response.specialty);
+        setAvailableDoctors([]);
+        setConversationState('waiting_symptoms');
+        
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          text: response.response,
+          sender: 'bot',
+          timestamp: new Date()
+        }]);
+      } else {
+        // No se pudo determinar especialidad
+        setConversationState('waiting_symptoms');
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          text: response.response,
+          sender: 'bot',
+          timestamp: new Date()
+        }]);
+      }
+    } catch (error) {
+      // Manejo de errores
+      let errorMessage = 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta nuevamente.';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'El chatbot está disponible solo para pacientes. Por favor, inicia sesión con una cuenta de paciente.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
       }
 
       setMessages(prev => [...prev, {
         id: prev.length + 1,
-        text: botResponse,
+        text: errorMessage,
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para obtener horarios disponibles
+  const loadAvailableSlots = async (medicoId, fecha) => {
+    try {
+      setLoadingSlots(true);
+      const response = await api.get(`/turnos/disponibilidad/${medicoId}?fecha=${fecha}`);
+      setAvailableSlots(response.data.horarios || []);
+      return response.data.horarios || [];
+    } catch (error) {
+      console.error('Error al cargar horarios:', error);
+      setAvailableSlots([]);
+      return [];
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  // Función para seleccionar médico
+  const handleSelectDoctor = (doctor) => {
+    setSelectedDoctor(doctor);
+    setConversationState('selecting_date');
+    
+    // Agregar mensaje del bot
+    setMessages(prev => [...prev, {
+      id: prev.length + 1,
+      text: `Perfecto, has seleccionado a **Dr. ${doctor.nombre} ${doctor.apellido}**.\n\nAhora elige una fecha para tu turno:`,
+      sender: 'bot',
+      timestamp: new Date()
+    }]);
+  };
+
+  // Función para seleccionar fecha
+  const handleSelectDate = async (date) => {
+    if (!selectedDoctor) return;
+    
+    setSelectedDate(date);
+    
+    // Validar que el médico atiende ese día
+    const dateObj = new Date(date);
+    const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const dayName = dias[dateObj.getDay()];
+    
+    if (!selectedDoctor.diasSemana.includes(dayName)) {
+      setMessages(prev => [...prev, {
+        id: prev.length + 1,
+        text: `⚠️ El Dr. ${selectedDoctor.nombre} ${selectedDoctor.apellido} no atiende los ${dayName}s. Por favor, elige otro día.`,
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+      setSelectedDate('');
+      return;
+    }
+
+    // Cargar horarios disponibles
+    setLoadingSlots(true);
+    const slots = await loadAvailableSlots(selectedDoctor.id, date);
+    
+    if (slots.length === 0) {
+      setMessages(prev => [...prev, {
+        id: prev.length + 1,
+        text: `No hay horarios disponibles para el ${dateObj.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}. Por favor, elige otra fecha.`,
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+      setSelectedDate('');
+      setLoadingSlots(false);
+      return;
+    }
+
+    setConversationState('selecting_time');
+    setMessages(prev => [...prev, {
+      id: prev.length + 1,
+      text: `Excelente. Horarios disponibles para el ${dateObj.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}:`,
+      sender: 'bot',
+      timestamp: new Date()
+    }]);
+    setLoadingSlots(false);
+  };
+
+  // Función para seleccionar hora
+  const handleSelectTime = (time) => {
+    setSelectedTime(time);
+    setConversationState('confirming');
+    
+    const dateObj = new Date(selectedDate);
+    setMessages(prev => [...prev, {
+      id: prev.length + 1,
+      text: `Perfecto. ¿Confirmas este turno?\n\n**Dr. ${selectedDoctor.nombre} ${selectedDoctor.apellido}**\n📅 ${dateObj.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\n🕐 ${time}`,
+      sender: 'bot',
+      timestamp: new Date()
+    }]);
+  };
+
+  // Función para confirmar y crear turno
+  const handleConfirmAppointment = async () => {
+    if (!selectedDoctor || !selectedDate || !selectedTime) return;
+
+    setLoading(true);
+    
+    try {
+      const response = await api.post('/turnos', {
+        medico_id: selectedDoctor.id,
+        fecha: selectedDate,
+        hora: selectedTime,
+        motivo: symptoms || null
+      });
+
+      // Mostrar mensaje de éxito
+      setMessages(prev => [...prev, {
+        id: prev.length + 1,
+        text: `✅ **¡Turno confirmado exitosamente!**\n\nTu turno ha sido agendado. Puedes ver todos tus turnos en tu Dashboard.\n\n¿Necesitas agendar otro turno? Escribe tus síntomas nuevamente.`,
         sender: 'bot',
         timestamp: new Date()
       }]);
 
+      // Resetear estados
+      setSelectedDoctor(null);
+      setSelectedDate('');
+      setSelectedTime('');
+      setAvailableSlots([]);
+      setDetectedSpecialty(null);
+      setAvailableDoctors([]);
+      setSymptoms('');
+      setConversationState('waiting_symptoms');
+
+    } catch (error) {
+      let errorMessage = 'Error al crear el turno. Por favor, intenta nuevamente.';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+
+      setMessages(prev => [...prev, {
+        id: prev.length + 1,
+        text: `❌ ${errorMessage}`,
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  // Función para cancelar y volver atrás
+  const handleCancel = () => {
+    if (conversationState === 'selecting_date') {
+      setSelectedDoctor(null);
+      setConversationState('showing_specialty');
+      setMessages(prev => [...prev, {
+        id: prev.length + 1,
+        text: 'De acuerdo. ¿Quieres seleccionar otro médico?',
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+    } else if (conversationState === 'selecting_time') {
+      setSelectedDate('');
+      setAvailableSlots([]);
+      setConversationState('selecting_date');
+      setMessages(prev => [...prev, {
+        id: prev.length + 1,
+        text: 'De acuerdo. Elige otra fecha:',
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+    } else if (conversationState === 'confirming') {
+      setSelectedTime('');
+      setConversationState('selecting_time');
+      setMessages(prev => [...prev, {
+        id: prev.length + 1,
+        text: 'De acuerdo. Elige otro horario:',
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+    }
   };
 
   const handleReset = () => {
@@ -270,6 +353,11 @@ const Chatbot = () => {
     setConversationState('waiting_symptoms');
     setDetectedSpecialty(null);
     setAvailableDoctors([]);
+    setSelectedDoctor(null);
+    setSelectedDate('');
+    setSelectedTime('');
+    setAvailableSlots([]);
+    setSymptoms('');
   };
 
   const formatMessage = (text) => {
@@ -385,6 +473,150 @@ const Chatbot = () => {
             </div>
           </div>
         ))}
+
+        {/* Botones de selección de médicos */}
+        {conversationState === 'showing_specialty' && availableDoctors.length > 0 && (
+          <div className="mb-3">
+            <div className="d-flex flex-column gap-2">
+              {availableDoctors.map((doctor) => (
+                <button
+                  key={doctor.id}
+                  className="btn btn-outline-primary text-start"
+                  onClick={() => handleSelectDoctor(doctor)}
+                  style={{
+                    borderRadius: '8px',
+                    padding: '12px',
+                    border: '1px solid #1E6FFB',
+                    backgroundColor: '#fff'
+                  }}
+                >
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>Dr. {doctor.nombre} {doctor.apellido}</strong>
+                      <br />
+                      <small className="text-muted">
+                        {doctor.diasSemana.join(', ')} | {doctor.horarioInicio} - {doctor.horarioFin}
+                      </small>
+                    </div>
+                    <i className="bi bi-chevron-right"></i>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Selector de fecha */}
+        {conversationState === 'selecting_date' && selectedDoctor && (
+          <div className="mb-3">
+            <div className="card" style={{ border: '1px solid #e0e0e0', borderRadius: '8px' }}>
+              <div className="card-body p-3">
+                <label className="form-label fw-bold mb-2">Selecciona una fecha:</label>
+                <input
+                  type="date"
+                  className="form-control mb-2"
+                  min={(() => {
+                    const hoy = new Date();
+                    return hoy.toISOString().split('T')[0];
+                  })()}
+                  max={(() => {
+                    const hoy = new Date();
+                    hoy.setDate(hoy.getDate() + 30);
+                    return hoy.toISOString().split('T')[0];
+                  })()}
+                  value={selectedDate}
+                  onChange={(e) => handleSelectDate(e.target.value)}
+                  disabled={loadingSlots}
+                />
+                {loadingSlots && (
+                  <div className="text-center mt-2">
+                    <div className="spinner-border spinner-border-sm text-primary" role="status">
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  </div>
+                )}
+                <button
+                  className="btn btn-sm btn-outline-secondary mt-2"
+                  onClick={handleCancel}
+                  disabled={loadingSlots}
+                >
+                  <i className="bi bi-arrow-left me-1"></i>
+                  Volver
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Selector de hora */}
+        {conversationState === 'selecting_time' && availableSlots.length > 0 && (
+          <div className="mb-3">
+            <div className="card" style={{ border: '1px solid #e0e0e0', borderRadius: '8px' }}>
+              <div className="card-body p-3">
+                <label className="form-label fw-bold mb-2">Selecciona un horario:</label>
+                <div className="d-flex flex-wrap gap-2">
+                  {availableSlots.map((slot) => (
+                    <button
+                      key={slot}
+                      className="btn btn-outline-primary"
+                      onClick={() => handleSelectTime(slot)}
+                      style={{
+                        minWidth: '80px',
+                        borderRadius: '6px'
+                      }}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="btn btn-sm btn-outline-secondary mt-3"
+                  onClick={handleCancel}
+                >
+                  <i className="bi bi-arrow-left me-1"></i>
+                  Volver
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmación */}
+        {conversationState === 'confirming' && (
+          <div className="mb-3">
+            <div className="card" style={{ border: '1px solid #1E6FFB', borderRadius: '8px' }}>
+              <div className="card-body p-3">
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn btn-success flex-grow-1"
+                    onClick={handleConfirmAppointment}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Confirmando...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-check-circle me-2"></i>
+                        Confirmar Turno
+                      </>
+                    )}
+                  </button>
+                  <button
+                    className="btn btn-outline-secondary"
+                    onClick={handleCancel}
+                    disabled={loading}
+                  >
+                    <i className="bi bi-x-circle me-1"></i>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {loading && (
           <div className="d-flex justify-content-start mb-3">
             <div
@@ -405,31 +637,55 @@ const Chatbot = () => {
 
       {/* Input de Mensaje */}
       <div className="card-footer bg-white" style={{ borderTop: '1px solid #e0e0e0' }}>
-        <form onSubmit={handleSendMessage}>
-          <div className="input-group">
-            <input
-              type="text"
-              className="form-control form-control-custom"
-              placeholder="Escribe tus síntomas aquí..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              disabled={loading}
-              style={{ border: 'none', boxShadow: 'none' }}
-            />
-            <button
-              type="submit"
-              className="btn btn-primary-custom"
-              disabled={loading || !inputMessage.trim()}
-              style={{ borderRadius: '0 12px 12px 0' }}
-            >
-              <i className="bi bi-send-fill"></i>
-            </button>
+        {!isPatient ? (
+          <div className="text-center p-3">
+            <div className="alert alert-warning mb-0" role="alert" style={{ fontSize: '14px' }}>
+              <i className="bi bi-exclamation-triangle me-2"></i>
+              El chatbot está disponible solo para pacientes. Por favor,{' '}
+              <Link to="/acceder" className="text-decoration-none fw-bold" style={{ color: '#1E6FFB' }}>
+                inicia sesión
+              </Link>
+              {' '}con una cuenta de paciente para continuar.
+            </div>
           </div>
-        </form>
-        <small className="text-muted" style={{ fontSize: '11px', display: 'block', marginTop: '5px' }}>
-          <i className="bi bi-shield-check me-1"></i>
-          Este asistente NO diagnostica ni receta medicamentos. Busca atención profesional para condiciones graves.
-        </small>
+        ) : (
+          <>
+            {conversationState === 'waiting_symptoms' || conversationState === 'showing_specialty' ? (
+              <form onSubmit={handleSendMessage}>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="form-control form-control-custom"
+                    placeholder={conversationState === 'waiting_symptoms' ? "Escribe tus síntomas aquí..." : "Escribe tu respuesta aquí..."}
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    disabled={loading}
+                    style={{ border: 'none', boxShadow: 'none' }}
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-primary-custom"
+                    disabled={loading || !inputMessage.trim()}
+                    style={{ borderRadius: '0 12px 12px 0' }}
+                  >
+                    <i className="bi bi-send-fill"></i>
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="text-muted text-center p-2" style={{ fontSize: '12px' }}>
+                <i className="bi bi-info-circle me-1"></i>
+                {conversationState === 'selecting_date' && 'Selecciona una fecha arriba'}
+                {conversationState === 'selecting_time' && 'Selecciona un horario arriba'}
+                {conversationState === 'confirming' && 'Confirma tu turno arriba'}
+              </div>
+            )}
+            <small className="text-muted" style={{ fontSize: '11px', display: 'block', marginTop: '5px' }}>
+              <i className="bi bi-shield-check me-1"></i>
+              Este asistente NO diagnostica ni receta medicamentos. Busca atención profesional para condiciones graves.
+            </small>
+          </>
+        )}
       </div>
     </div>
   );
