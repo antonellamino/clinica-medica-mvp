@@ -10,7 +10,13 @@ const Registro = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    telefono: "",
+    fechaDeNacimiento: "",
+    obraSocial: "",
+    direccion: "",
+    dni: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -47,6 +53,11 @@ const Registro = () => {
         apellido: formData.apellido,
         email: formData.email,
         password: formData.password,
+        telefono: formData.telefono,
+        fechaDeNacimiento: formData.fechaDeNacimiento,
+        obraSocial: formData.obraSocial,
+        direccion: formData.direccion,
+        dni: formData.dni,
       });
 
       setSuccess(true);
@@ -56,7 +67,7 @@ const Registro = () => {
     } catch (err) {
       setError(
         err.response?.data?.error ||
-          "Error al registrar. Por favor, intenta nuevamente."
+        "Error al registrar. Por favor, intenta nuevamente."
       );
     } finally {
       setLoading(false);
@@ -120,6 +131,63 @@ const Registro = () => {
                     />
                   </div>
                 </div>
+
+                <div className="mb-3">
+                  <label className="form-label" style={{ fontWeight: "500" }}>
+                    Teléfono
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control form-control-custom"
+                    name="telefono"
+                    value={formData.telefono}
+                    onChange={handleChange}
+                    placeholder="Ej: 1123456789"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label" style={{ fontWeight: "500" }}>
+                    DNI
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control form-control-custom"
+                    name="dni"
+                    value={formData.dni}
+                    onChange={handleChange}
+                    placeholder="Tu número de documento"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label" style={{ fontWeight: "500" }}>
+                    Obra Social
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control form-control-custom"
+                    name="obraSocial"
+                    value={formData.obraSocial}
+                    onChange={handleChange}
+                    placeholder="Ej: OSDE, Swiss Medical..."
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="form-label" style={{ fontWeight: "500" }}>
+                    Dirección
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control form-control-custom"
+                    name="direccion"
+                    value={formData.direccion}
+                    onChange={handleChange}
+                    placeholder="Calle, altura, ciudad"
+                  />
+                </div>
+
 
                 <div className="mb-3">
                   <label

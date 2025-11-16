@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // POST /api/auth/register - Registro de paciente
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, nombre, apellido } = req.body;
+    const { email, password, nombre, apellido, telefono, fechaDeNacimiento, obraSocial, direccion, dni } = req.body;
 
     // Validaciones
     if (!email || !password || !nombre) {
@@ -40,6 +40,11 @@ router.post('/register', async (req, res) => {
         role: 'paciente',
         nombre,
         apellido: apellido || null,
+        telefono: telefono || null,
+        fecha_nacimiento: fechaDeNacimiento ? new Date(fechaDeNacimiento) : null,
+        obra_social: obraSocial || null,
+        direccion: direccion || null,
+        dni: dni || null, 
       },
       select: {
         id: true,
@@ -47,6 +52,12 @@ router.post('/register', async (req, res) => {
         role: true,
         nombre: true,
         apellido: true,
+        telefono: true,
+        fecha_nacimiento: true,
+        obra_social: true,
+        direccion: true,
+        dni: true,
+        createdAt: true 
       }
     });
 
@@ -105,7 +116,13 @@ router.post('/login', async (req, res) => {
       email: user.email,
       role: user.role,
       nombre: user.nombre,
-      apellido: user.apellido,
+      apellido: user.apellido, 
+      telefono: user.telefono,
+      fecha_nacimiento: user.fecha_nacimiento, 
+      obra_social: user.obra_social,     
+      direccion: user.direccion,         
+      dni: user.dni,                     
+      createdAt: user.createdAt
     };
 
     res.json({

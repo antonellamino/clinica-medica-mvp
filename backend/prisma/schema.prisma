@@ -11,13 +11,18 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  role      String   // 'paciente' | 'medico' | 'admin'
-  nombre    String
-  apellido  String?
-  createdAt DateTime @default(now())
+  id               Int       @id @default(autoincrement())
+  email            String    @unique
+  password         String
+  role             String      // paciente | medico | admin
+  nombre           String
+  apellido         String?
+  telefono         String?
+  fecha_nacimiento DateTime?
+  obra_social      String?
+  direccion        String?
+  dni              String?
+  createdAt        DateTime  @default(now())
   
   // Relaciones
   medico        Medico?
