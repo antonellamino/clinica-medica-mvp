@@ -319,7 +319,7 @@ const CrearMedicoModal = ({ show, onHide, onSuccess }) => {
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary-custom"
                 disabled={loading}
               >
                 {loading ? (

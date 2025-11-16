@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Chatbot from '../components/Chatbot';
 import api from '../services/api';
 
 const Home = () => {
@@ -25,6 +26,10 @@ const Home = () => {
       // Redirigir según el rol
       if (response.data.user.role === 'admin') {
         navigate('/admin/medicos');
+      } else if (response.data.user.role === 'medico') {
+        navigate('/dashboard/medico');
+      } else if (response.data.user.role === 'paciente') {
+        navigate('/dashboard/paciente');
       } else {
         navigate('/');
       }
@@ -58,9 +63,10 @@ const Home = () => {
 
   return (
     <main className="container my-5 flex-grow-1">
-      {!isAuthenticated ? (
-        <div className="row justify-content-center">
-          <div className="col-lg-10">
+      <div className="row">
+        {/* Columna Izquierda: Login o Info de Sesión */}
+        <div className="col-lg-6 mb-4">
+          {!isAuthenticated ? (
             <div className="card card-custom">
               <div className="row g-0">
                 <div className="col-md-6 d-none d-md-flex align-items-center justify-content-center bg-light">
@@ -139,11 +145,7 @@ const Home = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className="row">
-          <div className="col-lg-6 mb-4">
+          ) : (
             <div className="card card-custom">
               <div className="row g-0">
                 <div className="col-md-6 d-none d-md-flex align-items-center justify-content-center bg-light">
@@ -160,54 +162,29 @@ const Home = () => {
                       Información de Sesión
                     </h3>
                     <p className="text-muted">Sesión iniciada correctamente</p>
+                    <Link 
+                      to="/dashboard/paciente" 
+                      className="btn btn-primary-custom mt-3"
+                    >
+                      Ir a mi Dashboard
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="col-lg-6">
-            <div className="card card-custom">
-              <div className="card-body p-4">
-                <h4 className="card-title mb-4" style={{ color: '#1E1E1E', fontWeight: '600' }}>
-                  ¿En qué podemos ayudarte?
-                </h4>
-                <form onSubmit={handleChatSubmit}>
-                  <div className="mb-3">
-                    <textarea
-                      className="form-control form-control-custom"
-                      rows="4"
-                      value={chatMessage}
-                      onChange={(e) => setChatMessage(e.target.value)}
-                      placeholder="Escribe tu consulta aquí..."
-                      required
-                    ></textarea>
-                  </div>
-                  {error && (
-                    <div className="alert alert-danger rounded-custom mb-3" role="alert">
-                      {error}
-                    </div>
-                  )}
-                  {chatResponse && (
-                    <div className="alert alert-info rounded-custom mb-3" role="alert">
-                      {chatResponse}
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    className="btn btn-primary-custom w-100"
-                    disabled={loading || !chatMessage.trim()}
-                  >
-                    {loading ? 'Enviando...' : 'Enviar Consulta'}
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      )}
+
+        {/* Columna Derecha: Chatbot Ético - SIEMPRE VISIBLE */}
+        <div className="col-lg-6 mb-4">
+          <Chatbot />
+        </div>
+      </div>
     </main>
   );
 };
 
 export default Home;
+
+
 

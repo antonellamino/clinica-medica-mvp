@@ -63,7 +63,35 @@ const Navbar = () => {
                   }}
                 >
                   <i className="bi bi-speedometer2 me-1"></i>
-                  Admin
+                  Panel Admin
+                </Link>
+              </li>
+            )}
+            {isAuthenticated && user?.role === 'paciente' && (
+              <li className="nav-item">
+                <Link 
+                  to="/dashboard/paciente" 
+                  className="nav-link"
+                  style={{ 
+                    fontWeight: '500'
+                  }}
+                >
+                  <i className="bi bi-person-circle me-1"></i>
+                  Mi Dashboard
+                </Link>
+              </li>
+            )}
+            {isAuthenticated && user?.role === 'medico' && (
+              <li className="nav-item">
+                <Link 
+                  to="/dashboard/medico" 
+                  className="nav-link"
+                  style={{ 
+                    fontWeight: '500'
+                  }}
+                >
+                  <i className="bi bi-person-badge me-1"></i>
+                  Mi Dashboard
                 </Link>
               </li>
             )}

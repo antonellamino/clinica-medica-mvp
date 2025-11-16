@@ -73,7 +73,7 @@ const ListadoMedicos = () => {
           Gestión de Médicos
         </h2>
         <button
-          className="btn btn-primary"
+          className="btn btn-primary-custom"
           onClick={() => setShowCrearModal(true)}
         >
           <i className="bi bi-person-plus me-2"></i>

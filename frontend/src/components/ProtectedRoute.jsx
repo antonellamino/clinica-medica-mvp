@@ -21,6 +21,15 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 
   if (requiredRole && user?.role !== requiredRole) {
+    // Redirigir al dashboard correspondiente según el rol del usuario
+    if (user?.role === 'paciente') {
+      return <Navigate to="/dashboard/paciente" replace />;
+    } else if (user?.role === 'medico') {
+      return <Navigate to="/dashboard/medico" replace />;
+    } else if (user?.role === 'admin') {
+      return <Navigate to="/admin/medicos" replace />;
+    }
+    // Si no tiene rol válido, redirigir a home
     return <Navigate to="/" replace />;
   }
 

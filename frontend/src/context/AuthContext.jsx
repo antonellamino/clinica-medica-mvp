@@ -47,12 +47,24 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
   };
 
+  // Helper para obtener el rol del usuario
+  const getUserRole = () => {
+    return user?.role || null;
+  };
+
+  // Verificar si el usuario tiene un rol específico
+  const hasRole = (role) => {
+    return user?.role === role;
+  };
+
   const value = {
     user,
     isAuthenticated,
     loading,
     login,
     logout,
+    getUserRole,
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

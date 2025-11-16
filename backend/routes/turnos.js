@@ -152,7 +152,7 @@ router.get('/', verifyToken, async (req, res) => {
               id: true,
               nombre: true,
               apellido: true,
-              email: true
+              email: true,
             }
           },
           medico: {
@@ -367,6 +367,214 @@ router.post('/', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error al crear turno:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// PUT /api/turnos/:id/cancelar - Cancelar turno
+// Requiere autenticación
+// Pacientes pueden cancelar sus turnos, médicos pueden cancelar sus turnos, admin puede cancelar cualquier turno
+router.put('/:id/cancelar', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, id: userId } = req.user;
+
+    // Buscar turno
+    const turno = await prisma.turno.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        paciente: true,
+        medico: {
+          include: {
+            user: true
+          }
+        }
+      }
+    });
+
+    if (!turno) {
+      return res.status(404).json({ error: 'Turno no encontrado' });
+    }
+
+    // Verificar permisos
+    if (role === 'paciente') {
+      // Paciente solo puede cancelar sus propios turnos
+      if (turno.pacienteId !== userId) {
+        return res.status(403).json({ error: 'No tienes permiso para cancelar este turno' });
+      }
+    } else if (role === 'medico') {
+      // Médico solo puede cancelar sus propios turnos
+      if (turno.medico.userId !== userId) {
+        return res.status(403).json({ error: 'No tienes permiso para cancelar este turno' });
+      }
+    }
+    // Admin puede cancelar cualquier turno
+
+    // Verificar que el turno no esté ya cancelado o completado
+    if (turno.estado === 'cancelado') {
+      return res.status(400).json({ error: 'Este turno ya está cancelado' });
+    }
+
+    if (turno.estado === 'completado') {
+      return res.status(400).json({ error: 'No se puede cancelar un turno completado' });
+    }
+
+    // Verificar que no sea un turno pasado
+    const fechaTurno = new Date(turno.fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaTurno.setHours(0, 0, 0, 0);
+
+    // Permitir cancelar turnos pasados solo si no están completados
+    // (Ya lo verificamos arriba)
+
+    // Actualizar estado
+    const turnoActualizado = await prisma.turno.update({
+      where: { id: parseInt(id) },
+      data: {
+        estado: 'cancelado'
+      },
+      include: {
+        paciente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
+          }
+        },
+        medico: {
+          include: {
+            user: {
+              select: {
+                nombre: true,
+                apellido: true
+              }
+            },
+            especialidad: {
+              select: {
+                nombre: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({
+      message: 'Turno cancelado exitosamente',
+      turno: turnoActualizado
+    });
+  } catch (error) {
+    console.error('Error al cancelar turno:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// PUT /api/turnos/:id/confirmar - Confirmar turno
+// Requiere autenticación (solo médicos)
+router.put('/:id/confirmar', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, id: userId } = req.user;
+
+    // Solo médicos pueden confirmar turnos
+    if (role !== 'medico') {
+      return res.status(403).json({ error: 'Solo los médicos pueden confirmar turnos' });
+    }
+
+    // Buscar médico
+    const medico = await prisma.medico.findUnique({
+      where: { userId: userId }
+    });
+
+    if (!medico) {
+      return res.status(404).json({ error: 'Médico no encontrado' });
+    }
+
+    // Buscar turno
+    const turno = await prisma.turno.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        paciente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
+          }
+        },
+        medico: {
+          include: {
+            user: {
+              select: {
+                nombre: true,
+                apellido: true
+              }
+            },
+            especialidad: {
+              select: {
+                nombre: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!turno) {
+      return res.status(404).json({ error: 'Turno no encontrado' });
+    }
+
+    // Verificar que el turno pertenezca al médico
+    if (turno.medicoId !== medico.id) {
+      return res.status(403).json({ error: 'No tienes permiso para confirmar este turno' });
+    }
+
+    // Verificar que el turno esté pendiente
+    if (turno.estado !== 'pendiente') {
+      return res.status(400).json({ error: `No se puede confirmar un turno con estado '${turno.estado}'` });
+    }
+
+    // Actualizar estado
+    const turnoActualizado = await prisma.turno.update({
+      where: { id: parseInt(id) },
+      data: {
+        estado: 'confirmado'
+      },
+      include: {
+        paciente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true
+          }
+        },
+        medico: {
+          include: {
+            user: {
+              select: {
+                nombre: true,
+                apellido: true
+              }
+            },
+            especialidad: {
+              select: {
+                nombre: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({
+      message: 'Turno confirmado exitosamente',
+      turno: turnoActualizado
+    });
+  } catch (error) {
+    console.error('Error al confirmar turno:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });

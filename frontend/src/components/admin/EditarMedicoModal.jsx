@@ -325,7 +325,7 @@ const EditarMedicoModal = ({ show, onHide, medico, onSuccess }) => {
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary-custom"
                 disabled={loading}
               >
                 {loading ? (
