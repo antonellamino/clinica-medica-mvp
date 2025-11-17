@@ -27,6 +27,7 @@ function App() {
         <Router>
           <div className="d-flex flex-column min-vh-100">
             <Navbar />
+            <div style={{ paddingTop: '76px', paddingBottom: '120px', minHeight: 'calc(100vh - 196px)' }}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/contacto" element={<Contacto />} />
@@ -74,6 +75,7 @@ function App() {
                 <Route path="turnos" element={<ListadoTurnos />} />
               </Route>
             </Routes>
+            </div>
             <Footer />
           </div>
         </Router>

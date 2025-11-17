@@ -417,17 +417,18 @@ const Chatbot = () => {
   return (
     <div className="card card-custom" style={{ height: '600px', display: 'flex', flexDirection: 'column' }}>
       {/* Header del Chat */}
-      <div className="card-header bg-light d-flex justify-content-between align-items-center" style={{ borderBottom: '1px solid #e0e0e0' }}>
-        <div className="d-flex align-items-center">
-          <i className="bi bi-robot me-2" style={{ fontSize: '20px', color: '#1E6FFB' }}></i>
-          <h5 className="mb-0" style={{ color: '#1E1E1E', fontWeight: '600' }}>
-            Asistente Virtual Médico
+      <div className="card-header bg-light d-flex justify-content-between align-items-center" style={{ borderBottom: '1px solid #e0e0e0', padding: '12px 16px' }}>
+        <div className="d-flex align-items-center flex-grow-1" style={{ minWidth: 0, marginRight: '10px' }}>
+          <i className="bi bi-robot me-2" style={{ fontSize: '20px', color: '#1E6FFB', flexShrink: 0 }}></i>
+          <h5 className="mb-0" style={{ color: '#1E1E1E', fontWeight: '600', fontSize: '15px', lineHeight: '1.3', wordBreak: 'break-word' }}>
+            Asistente Virtual de Derivación Médica
           </h5>
         </div>
         <button
           className="btn btn-sm btn-outline-secondary"
           onClick={handleReset}
           title="Reiniciar conversación"
+          style={{ flexShrink: 0 }}
         >
           <i className="bi bi-arrow-clockwise"></i>
         </button>

@@ -541,7 +541,98 @@ Authorization: Bearer TOKEN (de admin)
 
 ---
 
-## 🔗 Endpoints Pendientes
+### Chatbot con IA (Gemini)
 
-- `POST /api/chatbot` - Chatbot con Gemini
+#### POST /api/chatbot
+Analiza síntomas del paciente usando Google Gemini AI y recomienda especialidades. También puede responder consultas sobre médicos y especialidades disponibles. **Requiere autenticación** y role `paciente`.
+
+**Headers:**
+```
+Authorization: Bearer TOKEN (de paciente)
+```
+
+**Body:**
+```json
+{
+  "message": "dolor de panza y náuseas"
+}
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "response": "Perfecto, según lo que me comentas, te recomendaría consultar con **Gastroenterología**.\n\nTenemos los siguientes profesionales disponibles:\n\n- Dr. Juan Pérez (atiende lunes, martes, miercoles, jueves, viernes de 09:00 a 17:00)\n\n¿Con cuál de estos médicos te gustaría agendar tu turno?",
+  "specialty": "Gastroenterología",
+  "specialtyId": 1,
+  "doctors": [
+    {
+      "id": 1,
+      "userId": 2,
+      "nombre": "Juan",
+      "apellido": "Pérez",
+      "email": "medico1@clinica.com",
+      "especialidad": {
+        "id": 1,
+        "nombre": "Gastroenterología"
+      },
+      "horarioInicio": "09:00",
+      "horarioFin": "17:00",
+      "diasSemana": ["lunes", "martes", "miercoles", "jueves", "viernes"]
+    }
+  ],
+  "isUrgency": false
+}
+```
+
+**Respuesta para urgencia médica:**
+```json
+{
+  "response": "⚠️ **URGENCIA MÉDICA**: Por favor, acuda inmediatamente a emergencias o llame al 107. Estos síntomas podrían indicar una condición grave que requiere atención inmediata. No puedo ayudarte con urgencias médicas. Busca atención profesional inmediata.",
+  "specialty": null,
+  "specialtyId": null,
+  "doctors": [],
+  "isUrgency": true
+}
+```
+
+**Respuesta conversacional (sin síntomas específicos):**
+```json
+{
+  "response": "¡Hola! ¿En qué puedo ayudarte hoy?",
+  "specialty": null,
+  "specialtyId": null,
+  "doctors": [],
+  "isUrgency": false
+}
+```
+
+**Errores:**
+- `400` - "El mensaje es requerido"
+- `401` - "No autorizado" (token inválido o expirado)
+- `403` - "No autorizado" (solo pacientes pueden usar el chatbot)
+- `500` - "Error interno del servidor"
+
+**Características:**
+- ✅ Integración con Google Gemini API (gemini-2.5-flash, fallback a gemini-1.5-flash)
+- ✅ Detección inteligente de síntomas y derivación a especialidades
+- ✅ Respuestas conversacionales generadas por IA
+- ✅ Consulta a BD real cuando se pregunta por médicos (evita información ficticia)
+- ✅ Detección de urgencias médicas
+- ✅ Fallback con palabras clave si Gemini falla
+- ✅ Manejo de saludos y mensajes casuales
+
+**Ejemplos de uso:**
+- `"dolor de panza"` → Deriva a Gastroenterología
+- `"visión borrosa"` → Deriva a Oftalmología
+- `"hola"` → Respuesta conversacional de saludo
+- `"qué médicos atienden"` → Lista médicos reales de la BD
+- `"dolor de pecho intenso"` → Detecta urgencia médica
+
+**Nota:** El chatbot está diseñado para ser conversacional y natural, como hablar con una secretaria real. Todas las respuestas son generadas por IA para evitar respuestas genéricas.
+
+---
+
+## ✅ Estado del MVP
+
+Todos los endpoints del MVP están implementados y funcionando correctamente.
 

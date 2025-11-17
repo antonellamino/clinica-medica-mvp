@@ -29,7 +29,7 @@ const Home = () => {
       } else if (response.data.user.role === 'medico') {
         navigate('/dashboard/medico');
       } else if (response.data.user.role === 'paciente') {
-        navigate('/dashboard/paciente');
+        navigate('/');
       } else {
         navigate('/');
       }

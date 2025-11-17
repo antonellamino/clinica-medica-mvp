@@ -29,26 +29,53 @@ const isCasualMessage = (message) => {
   return casualKeywords.some(keyword => lowerMessage === keyword || lowerMessage.startsWith(keyword + ' ') || lowerMessage.endsWith(' ' + keyword));
 };
 
+// Función para detectar si el usuario pregunta por información de médicos o especialidades
+const isAskingAboutDoctors = (message) => {
+  const lowerMessage = message.toLowerCase();
+  const doctorKeywords = [
+    'medico', 'médico', 'medicos', 'médicos', 'doctor', 'doctores', 'dra', 'dr', 'doctora',
+    'quien atiende', 'quién atiende', 'quienes atienden', 'quienes son', 'quien es',
+    'nombre', 'apellido', 'especialista', 'especialistas', 'profesional', 'profesionales',
+    'lista de medicos', 'lista de médicos', 'que medicos', 'qué médicos', 'medicos disponibles',
+    'médicos disponibles', 'medicos que atienden', 'médicos que atienden'
+  ];
+  return doctorKeywords.some(keyword => lowerMessage.includes(keyword));
+};
+
 // Función para crear prompt conversacional para Gemini
-const createConversationalPrompt = (message, especialidades) => {
+const createConversationalPrompt = (message, especialidades, medicosInfo = null) => {
   const especialidadesList = especialidades.map(e => `- ${e.nombre}`).join('\n');
   
-  return `Eres María, una secretaria virtual muy amable y profesional de una clínica médica. Tu personalidad es cálida, empática y conversacional, como si fueras una secretaria real hablando con un paciente.
+  let prompt = `Eres María, una secretaria virtual muy amable y profesional de una clínica médica. Tu personalidad es cálida, empática y conversacional, como si fueras una secretaria real hablando con un paciente.
 
 ESPECIALIDADES DISPONIBLES:
-${especialidadesList}
+${especialidadesList}`;
+
+  // Si hay información de médicos, incluirla
+  if (medicosInfo) {
+    prompt += `\n\nINFORMACIÓN DE MÉDICOS (DATOS REALES DE LA BASE DE DATOS):
+${medicosInfo}
+
+IMPORTANTE: Solo menciona médicos que estén en la lista anterior. NO inventes nombres ni información.`;
+  }
+
+  prompt += `
 
 TU ESTILO DE COMUNICACIÓN:
 - Sé natural, amigable y conversacional
-- Responde saludos de forma cálida (ej: "¡Hola! ¿En qué puedo ayudarte hoy?")
+- NO te presentes en cada mensaje, solo saluda la primera vez si es necesario
+- NO repitas "Hola" constantemente, solo si es el primer mensaje
 - Si el paciente menciona síntomas, analízalos y recomienda la especialidad adecuada
 - Si no hay síntomas claros, pregunta amablemente qué necesita
 - Sé empática y profesional, pero no robótica
 - Usa un tono cercano pero respetuoso
+- Si te preguntan por médicos, usa SOLO la información real que te proporcioné
 
 MENSAJE DEL PACIENTE: "${message}"
 
 Responde de forma natural y conversacional. Si detectas síntomas, menciona la especialidad recomendada de forma amigable. Si es un saludo o mensaje casual, responde de forma cálida y pregunta cómo puedes ayudar.`;
+
+  return prompt;
 };
 
 // Función para crear prompt estructurado para Gemini (cuando hay síntomas claros)
@@ -111,11 +138,60 @@ router.post('/', verifyToken, requireRole('paciente'), async (req, res) => {
       return res.status(500).json({ error: 'No hay especialidades disponibles en el sistema' });
     }
 
+    // Detectar si el usuario pregunta por información de médicos
+    const askingAboutDoctors = isAskingAboutDoctors(originalMessage);
+    
+    // Si pregunta por médicos, obtener información real de la BD
+    let medicosInfo = null;
+    if (askingAboutDoctors) {
+      const medicos = await prisma.medico.findMany({
+        include: {
+          user: {
+            select: {
+              nombre: true,
+              apellido: true
+            }
+          },
+          especialidad: {
+            select: {
+              nombre: true
+            }
+          }
+        },
+        orderBy: {
+          especialidad: {
+            nombre: 'asc'
+          }
+        }
+      });
+      
+      // Agrupar médicos por especialidad
+      const medicosPorEspecialidad = {};
+      medicos.forEach(medico => {
+        const espNombre = medico.especialidad.nombre;
+        if (!medicosPorEspecialidad[espNombre]) {
+          medicosPorEspecialidad[espNombre] = [];
+        }
+        medicosPorEspecialidad[espNombre].push({
+          nombre: medico.user.nombre,
+          apellido: medico.user.apellido
+        });
+      });
+      
+      // Formatear información de médicos
+      medicosInfo = Object.entries(medicosPorEspecialidad).map(([esp, medicos]) => {
+        const medicosList = medicos.map(m => `Dr. ${m.nombre} ${m.apellido}`).join(', ');
+        return `${esp}: ${medicosList}`;
+      }).join('\n');
+      
+      console.log('📋 Información de médicos consultada:', medicosInfo);
+    }
+    
     // Detectar si es un mensaje casual (saludo, etc.)
     const isCasual = isCasualMessage(originalMessage);
     
-    // Si es mensaje casual, usar Gemini para respuesta conversacional
-    if (isCasual) {
+    // Si es mensaje casual o pregunta por médicos, usar Gemini para respuesta conversacional
+    if (isCasual || askingAboutDoctors) {
       try {
         const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
         let conversationalResponse = null;
@@ -123,7 +199,7 @@ router.post('/', verifyToken, requireRole('paciente'), async (req, res) => {
         for (const modelName of modelsToTry) {
           try {
             const model = genAI.getGenerativeModel({ model: modelName });
-            const prompt = createConversationalPrompt(originalMessage, especialidades);
+            const prompt = createConversationalPrompt(originalMessage, especialidades, medicosInfo);
             
             const result = await model.generateContent(prompt);
             const response = await result.response;
@@ -278,7 +354,7 @@ router.post('/', verifyToken, requireRole('paciente'), async (req, res) => {
         for (const modelName of modelsToTry) {
           try {
             const model = genAI.getGenerativeModel({ model: modelName });
-            const prompt = createConversationalPrompt(originalMessage, especialidades);
+            const prompt = createConversationalPrompt(originalMessage, especialidades, medicosInfo);
             
             const result = await model.generateContent(prompt);
             const response = await result.response;
@@ -396,24 +472,66 @@ router.post('/', verifyToken, requireRole('paciente'), async (req, res) => {
       diasSemana: medico.diasSemana.split(',').map(d => d.trim())
     }));
 
-    // Crear mensaje de respuesta más conversacional
-    const responses = [
-      `Perfecto, según lo que me comentas, te recomendaría consultar con **${especialidad.nombre}**.`,
-      `Entiendo. Para estos síntomas, lo ideal sería que te atienda un especialista en **${especialidad.nombre}**.`,
-      `Basado en lo que describes, te derivaría a **${especialidad.nombre}**.`
-    ];
+    // Usar Gemini para generar respuesta conversacional con médicos
+    let responseMessage = null;
     
-    let responseMessage = responses[Math.floor(Math.random() * responses.length)] + '\n\n';
+    try {
+      const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      
+      for (const modelName of modelsToTry) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          
+          // Crear prompt conversacional con información de médicos
+          const medicosInfo = medicosFormateados.map((m, i) => 
+            `- Dr. ${m.nombre} ${m.apellido} (atiende ${m.diasSemana.join(', ')} de ${m.horarioInicio} a ${m.horarioFin})`
+          ).join('\n');
+          
+          const prompt = `Eres María, una secretaria virtual muy amable de una clínica médica. Sé natural, conversacional y empática.
 
-    if (medicosFormateados.length > 0) {
-      responseMessage += `Tenemos los siguientes profesionales disponibles:\n\n`;
-      medicosFormateados.forEach((doctor, index) => {
-        responseMessage += `${index + 1}. **Dr. ${doctor.nombre} ${doctor.apellido}**\n`;
-        responseMessage += `   📅 Atiende: ${doctor.diasSemana.join(', ')} de ${doctor.horarioInicio} a ${doctor.horarioFin}\n\n`;
-      });
-      responseMessage += `¿Con cuál de estos médicos te gustaría agendar tu turno?`;
-    } else {
-      responseMessage += `Por el momento no tenemos médicos disponibles en esta especialidad. Te recomiendo que nos contactes directamente para coordinar una cita.`;
+El paciente te escribió: "${originalMessage}"
+
+Has detectado que necesita: ${especialidad.nombre}
+
+MÉDICOS DISPONIBLES:
+${medicosFormateados.length > 0 ? medicosInfo : 'Por el momento no hay médicos disponibles en esta especialidad.'}
+
+Genera una respuesta natural y conversacional (máximo 6-7 líneas) donde:
+- Le expliques amablemente que según sus síntomas, necesita ${especialidad.nombre}
+- Si hay médicos, preséntalos de forma natural y conversacional (no uses listas numeradas, sé fluida)
+- Si no hay médicos, dile amablemente que contacte directamente
+- Pregúntale con cuál médico le gustaría agendar (si hay disponibles)
+- Sé empática, profesional pero cercana, como una secretaria real
+- NO uses formato de lista, sé conversacional`;
+
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          responseMessage = response.text().trim();
+          
+          console.log(`💬 Respuesta conversacional completa de ${modelName}:`, responseMessage);
+          break;
+        } catch (modelError) {
+          if (modelName === modelsToTry[modelsToTry.length - 1]) {
+            throw modelError;
+          }
+          continue;
+        }
+      }
+    } catch (error) {
+      console.error('Error generando respuesta conversacional:', error);
+      // Fallback a respuesta simple si Gemini falla
+      responseMessage = `Perfecto, según lo que me comentas, te recomendaría consultar con **${especialidad.nombre}**.\n\n`;
+      
+      if (medicosFormateados.length > 0) {
+        responseMessage += `Tenemos los siguientes profesionales disponibles:\n\n`;
+        medicosFormateados.forEach((doctor, index) => {
+          responseMessage += `${index + 1}. **Dr. ${doctor.nombre} ${doctor.apellido}**\n`;
+          responseMessage += `   📅 Atiende: ${doctor.diasSemana.join(', ')} de ${doctor.horarioInicio} a ${doctor.horarioFin}\n\n`;
+        });
+        responseMessage += `¿Con cuál de estos médicos te gustaría agendar tu turno?`;
+      } else {
+        responseMessage += `Por el momento no tenemos médicos disponibles en esta especialidad. Te recomiendo que nos contactes directamente para coordinar una cita.`;
+      }
     }
 
     res.json({

@@ -23,7 +23,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-soft">
+    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-soft fixed-top" style={{ zIndex: 1030 }}>
       <div className="container-fluid">
         <Link 
           to="/" 
