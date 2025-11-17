@@ -80,6 +80,13 @@ npm run dev        # Inicia servidor con nodemon (auto-reload)
 npm start          # Inicia servidor normal
 ```
 
+### Tests
+```bash
+npm test           # Ejecutar todos los tests
+npm run test:watch # Ejecutar tests en modo watch (auto-reload)
+npm run test:coverage # Ejecutar tests con reporte de cobertura
+```
+
 ### Prisma
 ```bash
 npx prisma studio           # Abre Prisma Studio (GUI para ver datos)
@@ -632,7 +639,81 @@ Authorization: Bearer TOKEN (de paciente)
 
 ---
 
+## 🧪 Tests Unitarios
+
+El proyecto incluye tests unitarios implementados con **Jest** y **Supertest** para cumplir con el requisito del proyecto final.
+
+### Estructura de Tests
+
+```
+backend/
+  tests/
+    middleware/
+      auth.test.js      # Tests de middlewares de autenticación
+    routes/
+      auth.test.js      # Tests de rutas de autenticación
+      admin.test.js     # Tests de rutas de administración
+    helpers/
+      app.js            # Helper para crear app de Express en tests
+    setup.js            # Configuración global de tests
+```
+
+### Tests Implementados
+
+- **Middleware de Autenticación** (6 tests):
+  - Verificación de token válido
+  - Rechazo de acceso sin token
+  - Rechazo de acceso con token inválido
+  - Verificación de roles (admin permitido)
+  - Rechazo de acceso con rol incorrecto
+  - Rechazo de acceso sin autenticación
+
+- **Rutas de Autenticación** (8 tests):
+  - Registro exitoso de paciente
+  - Rechazo de registro con email duplicado
+  - Rechazo de registro con password muy corto
+  - Rechazo de registro sin campos requeridos
+  - Login exitoso con credenciales válidas
+  - Rechazo de login con credenciales inválidas
+  - Rechazo de login con usuario no encontrado
+  - Rechazo de login sin campos requeridos
+
+- **Rutas de Administración** (5 tests):
+  - Listado de pacientes con conteo de turnos
+  - Rechazo de acceso sin token
+  - Rechazo de acceso si no es admin
+  - Creación exitosa de paciente
+  - Rechazo de creación con password muy corto
+
+**Total: 19 tests unitarios** ✅
+
+### Ejecutar Tests
+
+```bash
+# Ejecutar todos los tests
+npm test
+
+# Ejecutar tests en modo watch (se re-ejecutan al cambiar archivos)
+npm run test:watch
+
+# Ejecutar tests con reporte de cobertura
+npm run test:coverage
+```
+
+### Tecnologías Utilizadas
+
+- **Jest**: Framework de testing para Node.js
+- **Supertest**: Librería para testear endpoints HTTP
+- **Mocks**: Prisma, bcrypt y jsonwebtoken están mockeados para tests aislados
+
+### Notas sobre Tests
+
+- Los tests usan mocks para aislar las pruebas de la base de datos real
+- No se requiere conexión a PostgreSQL para ejecutar los tests
+- Los mocks están configurados en `tests/setup.js`
+- Cada test es independiente y se ejecuta en un entorno limpio
+
 ## ✅ Estado del MVP
 
-Todos los endpoints del MVP están implementados y funcionando correctamente.
+Todos los endpoints del MVP están implementados y funcionando correctamente. Los tests unitarios están implementados y pasando correctamente.
 
