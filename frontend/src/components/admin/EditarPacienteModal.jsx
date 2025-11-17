@@ -178,7 +178,7 @@ const EditarPacienteModal = ({ show, onHide, paciente, onSuccess }) => {
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="btn btn-primary-custom"
                   disabled={loading}
                 >
                   {loading ? (

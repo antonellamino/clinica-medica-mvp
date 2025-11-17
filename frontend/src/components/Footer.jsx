@@ -4,7 +4,7 @@ const Footer = () => {
   const { isDarkMode } = useTheme();
   
   return (
-    <footer className="bg-white mt-auto shadow-soft" style={{ padding: '40px 0', marginTop: 'auto' }}>
+    <footer className="bg-white mt-auto shadow-soft fixed-bottom" style={{ padding: '40px 0', zIndex: 1030 }}>
       <div className="container">
         <div className="row align-items-center">
           <div className="col-md-4 text-center text-md-start mb-3 mb-md-0">

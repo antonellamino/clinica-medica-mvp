@@ -6,6 +6,7 @@ import especialidadesRoutes from './routes/especialidades.js';
 import medicosRoutes from './routes/medicos.js';
 import turnosRoutes from './routes/turnos.js';
 import adminRoutes from './routes/admin.js';
+import chatbotRoutes from './routes/chatbot.js';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -34,6 +35,9 @@ app.use('/api/turnos', turnosRoutes);
 
 // Rutas de admin
 app.use('/api/admin', adminRoutes);
+
+// Rutas de chatbot
+app.use('/api/chatbot', chatbotRoutes);
 
 // Iniciar servidor
 app.listen(PORT, () => {

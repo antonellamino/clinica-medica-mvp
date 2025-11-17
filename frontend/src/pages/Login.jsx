@@ -33,6 +33,10 @@ const Login = () => {
       // Redirigir según el rol
       if (response.data.user.role === 'admin') {
         navigate('/admin/medicos');
+      } else if (response.data.user.role === 'medico') {
+        navigate('/dashboard/medico');
+      } else if (response.data.user.role === 'paciente') {
+        navigate('/');
       } else {
         navigate('/');
       }
