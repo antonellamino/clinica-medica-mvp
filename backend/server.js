@@ -40,6 +40,6 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 
 // Iniciar servidor
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor corriendo en ${PORT}`);
 });
